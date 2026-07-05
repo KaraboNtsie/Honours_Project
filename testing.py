@@ -38,3 +38,12 @@ r = requests.get(zenodo_url, timeout=30)
 record = r.json()
 for f in record.get("files", []):
     print(f"  File: {f['key']} | Size: {f['size']} bytes | URL: {f['links']['self']}")
+
+
+df = pd.read_csv("sesotho_clean.csv")
+print(f"Total sentences: {len(df)}")
+print(df["label"].value_counts())
+print("\nLS sample:")
+print(df[df["label"]=="LS"]["text"].head(5).to_string(index=False))
+print("\nSAS sample:")
+print(df[df["label"]=="SAS"]["text"].head(5).to_string(index=False))
