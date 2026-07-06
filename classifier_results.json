@@ -1,0 +1,14 @@
+{
+  "corpus_size": 302,
+  "train_size": 241,
+  "test_size": 61,
+  "label_distribution": {
+    "SAS": 200,
+    "LS": 102
+  },
+  "rule_based_f1": 0.9435,
+  "learned_f1": 0.9645,
+  "target_f1": 0.85,
+  "target_met": true,
+  "beats_baseline": true
+}
