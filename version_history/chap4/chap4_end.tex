@@ -1,0 +1,470 @@
+\documentclass[11pt,a4paper]{article}
+\usepackage[top=42pt,bottom=42pt,left=70pt,right=70pt]{geometry}  % to make pages wider
+
+\usepackage{amsmath}
+\usepackage{amsfonts}
+\usepackage{graphicx}  % for figures etc.
+\usepackage{url}  % to handle URLs 
+\usepackage[comma,authoryear]{natbib}  % for author-date ref style --  allows \citet (textual), and \citep (parenthesized)
+\usepackage[hidelinks]{hyperref}
+\hypersetup{allcolors=[rgb]{0, 0, 0.33},colorlinks=true}
+
+\renewcommand {\cite} {\citep}  % default for cite is citet in natbib - changes it to citep
+\renewcommand\bibname{References}    % if not using newrucsthesis sty file
+
+\usepackage{booktabs}
+\usepackage{array}
+\usepackage{enumitem}
+\usepackage{listings}
+\usepackage{amssymb}
+
+\usepackage{setspace}
+\doublespacing
+
+% Optional: Customizing how the code looks
+\lstset{
+    basicstyle=\ttfamily\small,
+    numbers=left,           
+    numberstyle=\tiny,     
+    stepnumber=2,          
+    numbersep=5pt,
+    frame=single,           
+    rulecolor=\color{black},
+    frameround=tttt,        
+    breaklines=true         
+}
+
+\title{Implementation}
+\author{g23n7880 }
+\date{September 2026}
+
+\begin{document}
+
+
+\section{Overview}
+This chapter documents the concrete realisation of the semi-automated pipeline described in Chapter 3, presenting the implementation of each stage together. The pipeline was implemented in Python 3.11 across a set of modular scripts, each corresponding to a discrete stage. The stages are semi-automated data collection, language identification, quality filtering, and orthographic classification. A training and evaluation pipeline for the orthographic classifier is documented, and the final corpus statistics are presented.
+
+
+
+\section{Stage 1: Semi-automated Data Collection}
+
+Data collection used a semi-automated approach, with source selection performed manually by the researcher. At the same time, all subsequent processing, including fetching, extraction, filtering, and labelling, was handled by the pipeline. 
+
+Sources were configured as structured tuples containing the URL, the orthographic variant label, a source identifier, an optional CSS selector for targeted extraction, and an optional list of skip patterns for excluding boilerplate content. The following shows the SAS and LS static source configurations:
+
+\begin{lstlisting}[language=Python, caption={Seed source configuration for SAS and LS variants.}, label={lst:sources}]
+[language=Python, caption={Seed source configuration for SAS and LS variants.}, label={lst:sources}]
+SAS_STATIC_SOURCES = [
+    ("https://www.gov.za/st",              "SAS", "govza_sesotho",  None, None),
+    ("https://www.sabc.co.za/sabc/sesotho/","SAS","sabc_sesotho",   None, None),
+    ("https://www.vukuzenzele.gov.za",     "SAS", "vukuzenzele",    None, None),
+    ("https://www.dbe.gov.za/sesotho",     "SAS", "dbe_sesotho",    None, None),
+    ("https://www.saps.gov.za/sesotho",    "SAS", "saps_sesotho",   None, None),
+]
+ 
+LS_STATIC_SOURCES = [
+    ("https://www.gov.ls",                 "LS",  "gov_ls",         None, None),
+    ("https://www.lestimes.com",           "LS",  "lestimes",       None, None),
+    ("https://www.thepost.co.ls",          "LS",  "thepost_ls",     None, None),
+    ("https://www.leihlolabasotho.co.ls",  "LS",  "leihlolabasotho",None, None),
+]
+\end{lstlisting}
+
+Beyond the static source lists, three additional source-specific collection methods were implemented: a systematic scraper for the Nal'ibali reading campaign, a downloader for the Vuk'uzenzele DSFI GitHub corpus, and a local PDF processor for Sesotho matric examination papers.
+
+\subsection{Web extraction}
+
+HTML text was extracted using the \texttt{fetch\_and\_collect} function, which handles URL fetching, content selection, paragraph extraction, and the quality and LID filtering chain in a single call. The function accepts an optional CSS class selector for cases where the target content is contained within a specific page element, as is the case with the Nalibali website, which renders story content inside \texttt{div} elements carrying the class \texttt{elementor-widget-text-editor}:
+
+\begin{lstlisting}[language=Python, caption={Core web extraction function.}, label={lst:fetch}]
+def fetch_and_collect(url, label, source_name, selector=None, skip_patterns=None):
+    r = requests.get(url, headers=HEADERS, timeout=15)
+    soup = BeautifulSoup(r.text, "html.parser")
+ 
+    if selector:
+        divs = soup.find_all("div", class_=selector)
+        paragraphs = [p.get_text() for div in divs
+                      for p in div.find_all("p")]
+    else:
+        paragraphs = [p.get_text() for p in soup.find_all("p")]
+ 
+    if skip_patterns:
+        paragraphs = [p for p in paragraphs
+                      if not any(sp in p.lower()
+                                 for sp in skip_patterns)]
+ 
+    raw_text = " ".join(paragraphs)
+    sentences = split_sentences(clean_text(raw_text))
+ 
+    results = []
+    for sentence in sentences:
+        if not is_quality(sentence):
+            continue
+        ok, conf = verify_sesotho(sentence)
+        if ok:
+            results.append({"text": sentence, "label": label,
+                             "lid_confidence": conf,
+                             "source": source_name,
+                             "source_url": url})
+    return results
+\end{lstlisting}
+
+The Nalibali scraper first traversed the eight category pages to collect story URLs dynamically, then called \texttt{fetch\_and\_collect} on each story using the \texttt{elementor-widget-text-editor} selector and a list of skip patterns to exclude author attributions, translator credits, and comprehension question paragraphs. This approach reflects the structural reality of modern web publishing: content is rarely found in raw \texttt{<p>} tags at the page root. However, it is embedded within component frameworks that require targeted selection for clean extraction.
+
+\subsection{PDF extraction}
+
+Government documents fetched from remote URLs using \texttt{requests} library, and Sesotho matric examination papers (National Senior Certificate, Grade 12 Home Language and First Additional) loaded from local storage. PyMuPDF (\texttt{fitz}) was used for text extraction in both cases. 
+
+Examination papers required additional handling to suppress non-Sesotho content. An english-density filter was applied at the page level where pages with more that 15\% of words matched the English marker lexicon were skipped entirely, retaining only the pages dominated by Sesotho content:
+
+\begin{lstlisting}[language=Python, caption={English-density page filter for exam PDF extraction.}, label={lst:pdf}]
+for page_num in range(2, total_pages - 1):
+    page_text = doc[page_num].get_text("text")
+    eng_count = len([
+        w for w in re.findall(r'\b[a-zA-Z]{4,}\b', page_text.lower())
+        if w in ENGLISH_MARKERS
+    ])
+    total_words = len(page_text.split())
+    if total_words > 0 and eng_count / total_words > 0.15:
+        continue  # skip English-heavy pages
+    # process remaining pages normally
+\end{lstlisting}
+
+The first two pages of each PDF were unconditionally skipped to exclude cover pages and rubrics.
+
+\subsection{Vuk'uzenzele DSFI Corpus}
+
+The Vuk'uzenzele corpus was accessed directly from the DSFI Github repository via the GitHub Contents API, which returns a JSON listing of files in the \texttt{data/simple\_align\_output} directory. Each CSV file in this directory contains sentence-aligned English--Sesotho pairs. The Sesotho column was identified by searching for column names containing the substrings \texttt{sot}, \texttt{sesotho}, or \texttt{target}, with a fallback to the second colum for files where no match was found:
+
+\begin{lstlisting}[language=Python, caption={Vuk'uzenzele Sesotho column extraction.}, label={lst:vuku}]
+sesotho_col = None
+for col in df_raw.columns:
+    if any(x in col.lower() for x in ["sot", "sesotho", "target"]):
+        sesotho_col = col
+        break
+if sesotho_col is None and len(df_raw.columns) >= 2:
+    sesotho_col = df_raw.columns[1]
+\end{lstlisting}
+
+
+\subsection{Collection Results}
+
+\begin{table}[ht]
+    \centering
+    \label{tab:corpus_sources}
+    \caption{Corpus Source breakdown after all quality filters.}
+    \begin{tabular}{llrr}
+     \toprule
+    \textbf{Source} & \textbf{Label} & \textbf{Domain} & \textbf{Sentences} \\
+    \midrule
+    Matric HL Exam (NSC)   & SAS & Educational  & 3,347 \\
+    Nalibali               & SAS & Narrative    & 3,165 \\
+    Vuk'uzenzele DSFSI     & SAS & Government   & 1,182 \\
+    gov.za PDFs            & SAS & Government   &   833 \\
+    \midrule
+    \textit{SAS subtotal}  &     &              & \textit{5,362} \\
+    \midrule
+    Mokhosi SN (Zenodo)    & LS  & News         &    99 \\
+    Lesotho web sources    & LS  & Mixed        & 3,165 \\
+    \midrule
+    \textit{LS subtotal}   &     &              & \textit{3,264} \\
+    \midrule
+    \textbf{Total}         &     &              & \textbf{8,626} \\
+    \bottomrule
+    \end{tabular}
+\end{table}
+
+
+
+\section{Stage 2: Language Identification and Quality Filtering}
+
+\subsection{Text cleaning}
+
+Raw text from all sources underwent a four-step cleaning procedure before LID verification. Unicode normalisation to NFC form was applied first, ensuring that diacritical marks are represented in their canonical composed form rather than as decomposed sequences, which is critical for LS content, where diacritics encode phonological distinctions that SAS orthography omits \citep{matlosa2017sesotho}. URL strings were then removed, followed by HTML entity decoding and whitespace normalisation. Question numbers that appear at the start of sentences, a common artefact of PDF extraction of examination papers, were stripped using a regular expression.
+
+\begin{lstlisting}[language=Python, caption={Text cleaning function.}, label={lst:clean}]
+def clean_text(text):
+    text = unicodedata.normalize("NFC", str(text))
+    text = re.sub(r"http\S+", "", text)
+    text = re.sub(r"&[a-z]+;", "", text)
+    # strip leading question numbers e.g. "3." "(a)" "[1]"
+    text = re.sub(r"^\s*[\d]+[\.\)]\s*", "", text)
+    text = re.sub(r"^\s*[\(\[]\s*[a-zA-Z\d]\s*[\)\]]\s*", "", text)
+    text = re.sub(r"\s+", " ", text).strip()
+    return text
+\end{lstlisting}
+
+\subsection{Code-Switching Detection}
+
+A code-switching filter was applied to reject sentences containing substantial English content. The filter counts occurrences of unambiguously English words of three or more characters and rejects sentences where this count exceeds two. The three-character minimum is due to single-character tokens such as \textit{a}, \textit{o}, and \textit{e}, which are valid Sesotho morphemes serving as verb agreement prefixes and conjunctions, and would generate false positives under a naive English word count:
+
+\begin{lstlisting}[language=Python, caption={Code-switching detection function.}, label={lst:codeswitching}]
+ENGLISH_MARKERS = {
+    'the', 'and', 'for', 'are', 'but', 'not', 'you', 'all',
+    'can', 'will', 'that', 'this', 'they', 'from', 'have',
+    # ... (full set of 60+ unambiguous English function words)
+}
+ 
+def is_code_switched(text, max_english=2):
+    words = re.findall(r'\b[a-zA-Z]{3,}\b', text.lower())
+    hits = [w for w in words if w in ENGLISH_MARKERS]
+    return len(hits) > max_english
+\end{lstlisting}
+
+An additional filter rejected sentences containing \LaTeX\ anonymisation placeholders of the form \texttt{\$T\$} or \texttt{\$X\$}, which were present in a subset of the Mokhosi SN dataset where named entities needed to be anonymised for sentiment annotation. Sentences where fewer than 60\% of characters were alphabetic were also rejected to exclude fragments consisting predominantly of digits, punctuation or formatting symbols.
+
+
+\subsection{GlotLID Language Verification}
+
+Each candidate sentence was submitted to GlotLID \citep{kargaran2024glotcc} for language identification. GlotLID operates as a fastText classification model covering 1665 language varieties and returns a ranked list of predicted language labels with associated probability scores. The verification function retains a sentence only when GlotLID's top prediction is \texttt{sot\_Latn} (Sesotho in Latin script) with a confidence score at or above 0.7: 
+
+\begin{lstlisting}[language=Python, caption={GlotLID language verification function.}, label={lst:glotlid}]
+def verify_sesotho(sentence, threshold=0.7):
+    clean = sentence.replace("\n", " ").strip()
+    labels, scores = model.predict(clean, k=1)
+    lang  = labels[0].replace("__label__", "")
+    score = float(scores[0])
+    return lang == "sot_Latn" and score >= threshold, round(score, 4)
+\end{lstlisting}
+
+
+The 0.7 threshold was established empirically through diagnostic testing on known Sesotho sentences from the Mokhosi SN dataset, which showed that short new headlines of four to six words receive GlotLID scores between 0.85 and 0.91, well above the threshold but below the conventional 0.9 value calibrated for longer high-resource texts. Applying 0.9 would have systemically rejected valid LS headline sentences. At 0.7, closely related languages such as Sestswana and Sesotho sa Leboa consistently scored below 0.2 on the Sesotho test sentences, providing a clear margin of confidence between acceptance and rejection.
+
+\subsection{Deduplication and Length filtering}
+
+Exact duplicate sentences were removed using pandas \texttt{drop\_duplicates} on the text column after all other filters had been applied. A minimum sentence length of five words was enforced as the final filter to remove fragments from headers, captions, and page navigation elements that survived earlier cleaning steps.
+
+
+\section{Stage 3: Orthographic Classification}
+
+\subsection{Pre-Classification Normalisation}
+A dedicated normalisation step was applied to all text immediately before classification, distinct from the cleaning applied during collection. This step addresses the domain artefact of corpora containing text from sources with different formatting conventions, such as government prose sentences having full stops, and news headlines do not. This normalisation avoids the classifier partially learning these formatting signals rather than the orthographic character patterns that distinguish the two variants.
+
+
+The normalisation function converts text to lowercase, strips all punctuation, and pads the result with leading and trailing spaces. The space padding ensures that boundary-sensitive marker strings such as \texttt{"ea"} match correctly at the start and end of sentences, not only in the middle:
+
+\begin{lstlisting}[language=Python, caption={Pre-classification normalisation.}, label={lst:norm}]
+def normalize_for_classification(text):
+    text = str(text).lower()
+    text = re.sub(r'[^\w\s]', ' ', text)   # remove punctuation
+    text = re.sub(r'\s+', ' ', text).strip()
+    return " " + text + " "  # pad for boundary marker matching
+\end{lstlisting}
+
+Importantly, diacritical marks are preserved throughout this normalisation. The regular expression \texttt{[~\textbackslash w \textbackslash s]} retains word characters including accented characters, because stripping diacritics would destroy the LS orthographic signal they carry \citep{matlosa2017sesotho}.
+
+\subsection{Rule-Based Baseline}
+
+A rule-based baseline classifier was implemented directly from the substitution rules \citet{makutoane2022people}. For each normalised sentence, the function counts occurrences of LS and SAS marker strings and assigns the label corresponding to the higher count, defaulting to SAS on a tie:
+
+\begin{lstlisting}[language=Python, caption={Rule-based baseline classifier.}, label={lst:rulebased}]
+LS_MARKERS  = [" ea ", " oa ", " li", " kh", " ch"]
+SAS_MARKERS = [" ya ", " wa ", " kg", "tjh", " di"]
+ 
+def rule_based_classify(text):
+    ls_score  = sum(text.count(m) for m in LS_MARKERS)
+    sas_score = sum(text.count(m) for m in SAS_MARKERS)
+    return "LS" if ls_score > sas_score else "SAS"
+\end{lstlisting}
+
+The baseline solidifies the existing linguistic documentation of the SAS/LS distinction, providing a performance ceiling achievable through explicit rule encoding. If the trained classifier does not surpass this baseline, it would indicate that the character n-gram features learn nothing beyond what the literature already explicitly states.
+
+\subsection{Character N-Gram Logistic Regression Classifer}
+
+The trained orthographic classifier was implemented as a scikit-learn \texttt{Pipeline} chaining a \texttt{CountVectorizer} to a \texttt{LogisticRegression} estimator. The pipeline abstraction ensures identical vectorisation at training and inference time, preventing train-test leakage:
+
+\begin{lstlisting}[language=Python, caption={Character n-gram logistic regression pipeline.}, label={lst:classifier}]
+classifier = Pipeline([
+    ("vectorizer", CountVectorizer(
+        analyzer="char_wb",
+        ngram_range=(2, 4),
+        max_features=1000,
+        strip_accents=None,       # preserve LS diacritics
+    )),
+    ("clf", LogisticRegression(
+        max_iter=1000,
+        class_weight="balanced",  # corrects 1.6:1 SAS/LS imbalance
+        C=1.0
+    ))
+])
+\end{lstlisting}
+
+The \texttt{char\_wb} analyser extracts character n-grams within word boundaries, padding each token with spaces before extraction so that boundary characters contribute to capture both the core two character substitution pairs such as (\textit{ea}/\textit{ya}) and the longer consonant cluster divergences (\textit{tjh}/\textit{ch}). \texttt{strip\_accents} was set to \texttt{None} to overide the scikit-learn default, which strips diacritical marks during vectorisation and diacritcs are significant in the LS orthography; removing them would degrade classification performance on the LS class. The \texttt{class\_weight='balanced'} parameter adjusts sample contribution thus helping with the class imbalance.
+
+
+
+\section{Stage 4: Corpus evaluation}
+
+Two downstream evaluations were implemented to assess the utility of the pipeline-curated corpus relative to the raw, unfiltered text from the same sources. The first measures language model perplexity on an independent benchmark while the second applies the corpus for named entity recognition.
+
+
+
+\subsection{Language Model Perplexity}
+
+A character-level 5-gram language model was implemented from scratch without external libraries. The model is built from a training corpus by counting all character n-grams and their preceding contexts, together with the full character vocabulary.
+
+\begin{lstlisting} [language=Python, caption={Character 5-gram language model construction with add-$k$ smoothing. Each sentence is padded with start and end tokens before n-gram extraction.}, label={lst:lm_build}]
+def build_ngram_lm(sentences, n=5, smoothing_k=0.1):
+    ngram_counts   = collections.Counter()
+    context_counts = collections.Counter()
+    char_vocab     = set()
+ 
+    for sentence in sentences:
+        # pad with n-1 start tokens and one end token
+        padded = "^" * (n-1) + sentence.lower() + "$"
+        for char in padded:
+            char_vocab.add(char)
+        for i in range(len(padded) - n + 1):
+            ngram   = padded[i:i+n]
+            context = padded[i:i+n-1]
+            ngram_counts[ngram]     += 1
+            context_counts[context] += 1
+ 
+    return {"ngram_counts": ngram_counts,
+            "context_counts": context_counts,
+            "vocab_size": len(char_vocab),
+            "n": n, "k": smoothing_k}
+\end{lstlisting}
+
+Sentence-level log probability was computed using add $-k$ smoothing, which assigns a non-zero probability to every character given any context by adding a small constant $k$ to both the numerator and denominator which avoids undefined logs.
+
+\begin{lstlisting} [language=Python, caption={Sentence log probability under the language model using add-$k$ smoothed character n-gram probabilities.}, label={lst:lm_prob}]
+def sentence_log_prob(sentence, lm):
+    n, k, V = lm["n"], lm["k"], lm["vocab_size"]
+    padded  = "^" * (n-1) + sentence.lower() + "$"
+    log_prob, char_count = 0.0, 0
+ 
+    for i in range(n-1, len(padded)):
+        ngram   = padded[i-n+1:i+1]
+        context = padded[i-n+1:i]
+        count_ngram   = lm["ngram_counts"].get(ngram, 0)
+        count_context = lm["context_counts"].get(context, 0)
+        # add-k smoothed probability
+        prob      = (count_ngram + k) / (count_context + k * V)
+        log_prob += math.log(prob)
+        char_count += 1
+ 
+    return log_prob, char_count
+\end{lstlisting}
+
+Corpus-level perplexity and per-sentence perplexity scores were the computed across the full FLORES-200 test set. The per-sentence scores are required for the Wilcoxon signed-rank significance test which operates on paired observations.
+
+\begin{lstlisting} [language=Python, caption={Corpus-level perplexity computation}, label={lst:lm_per}]
+def compute_perplexity(test_sentences, lm):
+    total_log_prob, total_chars = 0.0, 0
+    per_sent_perp = []
+ 
+    for sentence in test_sentences:
+        log_prob, n_chars  = sentence_log_prob(sentence, lm)
+        total_log_prob    += log_prob
+        total_chars       += n_chars
+        sent_pp = math.exp(-log_prob / max(n_chars, 1))
+        per_sent_perp.append(sent_pp)
+ 
+    corpus_pp = math.exp(-total_log_prob / max(total_chars, 1))
+    return corpus_pp, per_sent_perp
+\end{lstlisting}
+
+The raw baseline corpus was contructed by downloading the same source material with taking it through the pipeline the downsampling to the same size as the curated corpus using a fixed random seed of 42 to ensure a fair comparison.
+
+\subsection{Named Entity Recognition}
+The NER evaluation used AfroXLMR-mini \citep{alabi-etal-2022-adapting} as a frozen feature extractor, loading the model once and diabling gradient computation for all parameters. This approach was adopted due to GPU memory constraints which prevented the planned domain adaptive pretraining approach.
+
+\begin{lstlisting} [language=Python, caption={AfroXLMR-mini loaded as a frozen feature extractor}, label={lst:ner_encoder}]
+tokenizer = AutoTokenizer.from_pretrained("Davlan/afro-xlmr-mini")
+encoder   = AutoModel.from_pretrained("Davlan/afro-xlmr-mini").to(DEVICE)
+encoder.eval()
+ 
+# freeze all parameters: no backpropagation, minimal memory
+for param in encoder.parameters():
+    param.requires_grad = False
+\end{lstlisting}
+
+Per-token contextual embeddings were extracted by passing batches of tokenised sentences through the frozen encoder and collecting the last hidden state at the positiion of each word's first subword token.
+
+\begin{lstlisting} [language=Python, caption={Per-token feature extraction using first-subword embeddings.}, label={lst:ner_features}]
+
+def extract_token_features(sentences_tokens, batch_size=64):
+    all_features = []
+    for i in range(0, len(sentences_tokens), batch_size):
+        batch   = sentences_tokens[i:i+batch_size]
+        encoded = tokenizer(batch, truncation=True, max_length=64,
+                            padding=True, is_split_into_words=True,
+                            return_tensors="pt").to(DEVICE)
+        with torch.no_grad():
+            outputs = encoder(**encoded)
+        hidden = outputs.last_hidden_state.cpu().numpy()
+ 
+        for j, sent_tokens in enumerate(batch):
+            word_ids  = encoded.word_ids(batch_index=j)
+            word_embs = {}
+            for pos, wid in enumerate(word_ids):
+                # take first subword position for each word
+                if wid is not None and wid not in word_embs:
+                    word_embs[wid] = hidden[j, pos, :]
+            # assemble per-word feature matrix
+            feat = np.zeros((len(sent_tokens), hidden.shape[-1]))
+            for wid, emb in word_embs.items():
+                if wid < len(sent_tokens):
+                    feat[wid] = emb
+            all_features.append(feat)
+    return all_features
+
+\end{lstlisting}
+
+Corpus-level sentence embeddings werer computed by mean-pooling the encoder's last hidden state over non-padding positions, weighted by the attention mask. The mean of all sentence embeddings in each corpus was then computed as a corpus centroid vector representing the aggregate distributional properties of that corpus.
+
+\begin{lstlisting} [language=Python, caption={Mean-pooled sentence embedding extraction and corpus centroid computation.}, label={lst:ner_centroid}]
+
+def extract_sentence_features(sentences, batch_size=128):
+    all_embs = []
+    for i in range(0, len(sentences), batch_size):
+        batch   = sentences[i:i+batch_size]
+        encoded = tokenizer(batch, truncation=True, max_length=64,
+                            padding=True,
+                            return_tensors="pt").to(DEVICE)
+        with torch.no_grad():
+            outputs = encoder(**encoded)
+        # mean pool over non-padding tokens
+        mask = encoded["attention_mask"].unsqueeze(-1).cpu().float()
+        embs = outputs.last_hidden_state.cpu() * mask
+        embs = embs.sum(dim=1) / mask.sum(dim=1).clamp(min=1)
+        all_embs.append(embs.numpy())
+    return np.vstack(all_embs)
+ 
+# corpus centroids
+curated_centroid = extract_sentence_features(curated_sentences).mean(axis=0)
+raw_centroid     = extract_sentence_features(raw_sentences).mean(axis=0)
+
+\end{lstlisting}
+
+The NER classifier was implemented by concatenating the corpus centroid to every token feature vector before training a logistic regression classifier. This augmentation provides the classifier with a fixed siignal about the distributional properties of the corpus
+
+
+\begin{lstlisting} [language=Python, caption={Corpus-centroid augmeted NER classification.}, label={lst:ner_clf}]
+
+def run_ner_experiment(X_train, y_train, X_test, y_test,
+                       corpus_centroid, label):
+    # tile centroid to match token count, then concatenate
+    c_train = np.tile(corpus_centroid, (X_train.shape[0], 1))
+    c_test  = np.tile(corpus_centroid, (X_test.shape[0],  1))
+    Xa      = np.hstack([X_train, c_train])
+    Xb      = np.hstack([X_test,  c_test])
+ 
+    clf = LogisticRegression(max_iter=1000,
+                             class_weight="balanced",
+                             C=1.0, random_state=42,
+                             n_jobs=-1)
+    clf.fit(Xa, y_train)
+    preds    = clf.predict(Xb)
+    macro_f1 = f1_score(y_test, preds,
+                        average="macro", zero_division=0)
+    return macro_f1
+
+\end{lstlisting}
+
+
+
+\bibliographystyle{ruauthordate}
+\bibliography{implementation}  
+\end{document}

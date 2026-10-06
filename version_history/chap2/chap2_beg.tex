@@ -1,0 +1,38 @@
+\documentclass[11pt,a4paper]{article}
+\usepackage[top=42pt,bottom=42pt,left=70pt,right=70pt]{geometry}  % to make pages wider
+
+\usepackage{amsmath}
+\usepackage{amsfonts}
+\usepackage{graphicx}  % for figures etc.
+\usepackage{url}  % to handle URLs 
+\usepackage[comma,authoryear]{natbib}  % for author-date ref style --  allows \citet (textual), and \citep (parenthesized)
+\usepackage[hidelinks]{hyperref}
+\hypersetup{allcolors=[rgb]{0, 0, 0.33},colorlinks=true}
+
+\renewcommand {\cite} {\citep}  % default for cite is citet in natbib - changes it to citep
+\renewcommand\bibname{References}    % if not using newrucsthesis sty file
+
+\usepackage{booktabs}
+\usepackage{array}
+\usepackage{enumitem}
+\usepackage{amssymb}
+\begin{document}
+
+	
+% Create a title
+\title{Literatue review }
+\author{ Karabo Ntsie }
+\date { April 2026}
+\maketitle  
+
+\section{The linguistic profile of Sesotho}
+Sesotho is a Bantu language of the Sotho-Tswana group which is spoken predomiinantly in Lesotho and South Africa with over 13 million speakers with 5.6 million being first-language speakers and 7.9 million speakers having Sesotho as a second language \citep{mokoaleli2020sesotho}. The scale of speakers establishes Sesotho as a linguistically significant community that deserves computational support. Its continued marginalisation in human language technologies therefore a misalignment between its linguist structure and the underlying assumptions of current NLP methods
+
+This misalignment is rooted in its typological profile. Within the broader framework of morphological typology, Sesotho belongs to the agglunative branch of the synthetic languages which is a classifications it shares with the Bantu group and it stands in direct contrast of analytic or isolating languages such as English \citep{kambarami2021out,masethe2022word}. In agglutinative languages, words are constructed with morphemes, each carrying a single segmentable meaning \citep{kambarami2021out}. However, in Sesotho, this morphological organization challenges token-based and vocabulary driven computational methods as meaning is not distributed across independent units, but encoded through tightly interdependent morphological structures that can not be easily segmented. 
+
+The noun class system exemplifies these challenges. Each noun class is distinguished by unique prefixes which governs con-cordial agreement across the entire sentence, determining the form of subject markers, qualificative particles and associative markers on all cooccuring constituents. This creates dense, non-local dependencies that are poorly captured by models assuming token independence. The situation is further complicated by prefix drop, which introduces variability in surface forms and obscures underlying grammatical structure, undermining approaches that rely on stable orthographic cues.
+
+Sesotho's morphology is generative  because productive derivational process, alongside emerging patterns such as the extensions of the prefix /bo-/ across multiple lexical categories demonstrates the language continually produces novel, well-formed expressions \citep{}
+\bibliographystyle{ruauthordate}
+\bibliography{lit_review}  
+\end{document}

@@ -1,0 +1,31 @@
+Kopo ya tshebedisano ka elektroniki le SARS
+Mehato e latelwang
+Molao o sebediswang
+Maemo a tshebeletso
+Ditjeo
+Diforomo tse tlatsuwang
+Dintlha tsa bao o ka iteanyang le bona
+Tshebeletso ena e dumella motho, setheo kapa mokgatlo ho theha tshebedisano ka elektroniki le South African Revenue Service ka mekgwa e hlalositsweng ya teknoloji ya kgaso. Tshebetso e Ntjha ya Lekgetho la Kuno e radilwe ho fokotsa tshebediso ya dipampiri moo ho kgonahalang, le ho etsa hore ditshebetso tse ngata di iketsahalle kgabareng ho etsuwa bonnete ba ho tshwara balefi bohle ba lekgetho ka mokgwa o tshwanang. Ho hlahisitswe mefutafuta ya ditshebedisano tsa elektroniki.
+e a fumaneha ho Inthanethe ya SARS Online mme sepheo ke ho araba bongata ba dipotso.
+Hodimo
+Mehato e latelwang
+Ngodisa jwalo ka molekane wa tshebedisano ka ho tlatsa mme o romele foromo ya ngodiso ya tshebedisano ka elektroniki, ya nomoro INF001 ho SARS Interface Administration, P.O. Box 402, Pretoria 0001 kapa ka e-meile ho its.interfaces@sars.gov.za. Dikopo tsa katoloso ya nako ya ho romela ditlaleho tsa tshebetso tsa lekgetho la kuno di ka kotjwa ka elektroniki le ha o sa ngodisa.
+Rekota dintlha tse latelang tse nehelwang ke SARS ka mora ho ngodisa:
+Khoutu ya ho hlwaya tshebetso e abelwang mokgatlo ke SARS
+khoutu ya ho hlwaya mosebedisi le password bakeng sa ho kena ho tshebetso ya faele ya SARS eo faele ya data e lokelang ho romelwa ho yona.
+Fumana data encryption software le mokgwa wa ho se kenya ho SARS. Ka tlwaelo SARS o tla tlisa sesebediswa ho mokgatlo.
+Romela difaele tsa data tsa tekolo, mme o hule difaele tsa karabo tsa tekolo ho SARS.
+Tiisa kamohelo ya difaele tsa data tsa tekolo ho Molaodi wa SARS Interface mme o kenye tshebedisano tshebetsong ka ho fapanyetsana difaele tse sebetsang tsa data.
+Hokahana le Molaodi wa SARS Interface ha ho etsahala ho be teng difaele tse senyehileng tsa data, difaele tse lahlehileng tsa data kapa difaele tse phetaphetilweng tsa data.
+Hodimo
+Molao o sebediswang
+Hodimo
+Maemo a tshebeletso
+SARS e kentse di-Service standards a tla nka dilemo tse pedi ho kenngwa tshebetsong . Ha o ngodisa kapa o etsa tefo efe kapa efe, SARS o ikemiseditse ho hlophisa ngodiso ya hao ka mokgwa o nepahetseng nakong ya matsatsi a 10 a ho sebetsa.
+Hodimo
+Ditjeo
+Tshebeletso ke ya mahala.
+Hodimo
+Diforomo tse tlatsuwang
+Hodimo
+Dintlha tsa bao o ka iteanyang le bona

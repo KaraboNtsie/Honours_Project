@@ -1,0 +1,23 @@
+{
+  "test_set": "FLORES-200 Sesotho devtest",
+  "test_sentences": 1012,
+  "model_order": 5,
+  "smoothing": "add-k (k=0.1)",
+  "curated": {
+    "training_sentences": 8626,
+    "perplexity": 6.2137,
+    "vocab_size": 77,
+    "unique_ngrams": 58753
+  },
+  "raw": {
+    "training_sentences": 8626,
+    "perplexity": 9.1069,
+    "vocab_size": 70,
+    "unique_ngrams": 109799
+  },
+  "perplexity_reduction": 2.8932,
+  "perplexity_reduction_pct": 31.77,
+  "wilcoxon_stat": 3078.0,
+  "p_value": 0.0,
+  "significant_at_0_05": true
+}

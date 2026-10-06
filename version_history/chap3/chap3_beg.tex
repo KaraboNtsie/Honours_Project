@@ -1,0 +1,55 @@
+\documentclass[11pt,a4paper]{article}
+\usepackage[top=42pt,bottom=42pt,left=70pt,right=70pt]{geometry}  % to make pages wider
+
+\usepackage{amsmath}
+\usepackage{amsfonts}
+\usepackage{graphicx}  % for figures etc.
+\usepackage{url}  % to handle URLs 
+\usepackage[comma,authoryear]{natbib}  % for author-date ref style --  allows \citet (textual), and \citep (parenthesized)
+\usepackage[hidelinks]{hyperref}
+\hypersetup{allcolors=[rgb]{0, 0, 0.33},colorlinks=true}
+
+\renewcommand {\cite} {\citep}  % default for cite is citet in natbib - changes it to citep
+\renewcommand\bibname{References}    % if not using newrucsthesis sty file
+
+\usepackage{booktabs}
+\usepackage{array}
+\usepackage{enumitem}
+\usepackage{amssymb}
+
+\usepackage{setspace}
+\doublespacing
+
+\title{Methodology}
+\author{g23n7880 }
+\date{September 2026}
+
+\begin{document}
+
+\maketitle
+
+\section{Data Selection}
+\label{sec: data_selection}
+\subsection{Mokhosi SN dataset}
+
+
+\section{Implementation}
+The pipeline was implemented in Python 3.11 across three modular scripts, each corresponding to a discrete pipeline stage. The modular architecture follows design principle articulated by \citet{suchomel2020better} that pipeline components should be independently testable before integration, so that errors introduced at one stage do not propagate silently to another stage. A similar modular approach is adopted by \citet{de2024data} in the Labadian Crawler for Tetun, and by \citet{gumede2025creating} in the ULPDO isiZulu corpus construction, both of which combine automated processing with targeted human input at key quality decision points.
+
+\subsection{Stage 1: Semi-Automated Collection and Identification}
+Data collection followed a semi-automaated approach in which  human judgement was exercised at the source-selection stage, with all subsequent processing automated. This design is consistent with \citet{gumede2025creating} hybrid approach as humans provide expert opinion on which sources are appropriate while automation handles extraction, verification, and structuring at scale. The distinction was made due to a narrowing of the scope for the project. The semi automated process is favoured by \citet{barbaresi2013challenges} as \citet{barbaresi2013challenges} argues that crawling without expert knowledge of the target language is liable to produce systematic distortions, since search engines and broad crawlers favour English content and structurally well-connected domains. For a language like Sesotho, whose digital presence is concentrated in specific institutional and community domains rather than broadly distributed across the web, targeted source selection by a research with knowledge of the language community provides more a reliable starting point than unrestricted automated discovery.
+
+Three seed sources were selected, as described in Section~\ref{sec: data_selection}. For each source, text was retrieve using the Python \texttt{requests} library with a standard browser user-agent string to avoid bot rejection. HTML content was parsed using BeautifulSoup4, with content extracted from semantically appropriate containers identified through prior page inspection for each source. For the NaliBali source, which renders content through an Elementor page builder framework, text was extracted from \texttt{div} elements carrying the CSS class \texttt{elementor-widget-text-editor}, identified through diagnostic inspection of the page structure. 
+
+Sentence segmentation was performed by splitting on terminal punctuation characters which are full stop, exclamation mark, question mark, and newline. Segements of more than three words or more were retained which excluded isolated headers, navigation lables, single-word or two-word fragments that are not linguistically usable while retaining grammatically complete short sentences typical of new headline and children's story text. \citep{de2024data} adopt a comparable minimu word threshold in their Tetun corpus pipeline.
+
+Each candidate sentence was submitted individually to GlotLID \citep{kargaran2024glotcc}, a fastText-based langugae indentification model covering 1655 language varieties. GlotLID was selected for its false positive rate
+\subsection{Stage 2: Cleaning}
+\subsection{Stage 3: Orthographic Classification}
+\subsection{Data Processing and Sampling }
+\subsection{Parameter Tuning}
+\subsection{Evaluation Pipeline}
+
+\bibliographystyle{ruauthordate}
+\bibliography{methodology}  
+\end{document}

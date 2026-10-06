@@ -1,0 +1,205 @@
+\documentclass[11pt,a4paper]{article}
+\usepackage[top=42pt,bottom=42pt,left=70pt,right=70pt]{geometry}  % to make pages wider
+
+\usepackage{amsmath}
+\usepackage{amsfonts}
+\usepackage{graphicx}  % for figures etc.
+\usepackage{url}  % to handle URLs 
+\usepackage[comma,authoryear]{natbib}  % for author-date ref style --  allows \citet (textual), and \citep (parenthesized)
+\usepackage[hidelinks]{hyperref}
+\hypersetup{allcolors=[rgb]{0, 0, 0.33},colorlinks=true}
+
+\renewcommand {\cite} {\citep}  % default for cite is citet in natbib - changes it to citep
+\renewcommand\bibname{References}    % if not using newrucsthesis sty file
+
+\usepackage{booktabs}
+\usepackage{array}
+\usepackage{enumitem}
+\usepackage{amssymb}
+\begin{document}
+
+	
+% Create a title
+\title{Developing an Automated NLP Pipeline for the Collection and Curation of Sesotho Text Resources }
+\author{ Karabo Ntsie }
+\date { February 2026}
+\maketitle  
+
+
+\section{Introduction}
+\label{sec:intro}
+
+\iffalse 
+Comment section: 
+advancements** 
+\fi
+Large-scale corpora have driven modern advances in Natural Language Processing (NLP),
+yet many languages remain underrepresented within the datasets. \citet{Mishra2020} state that a significant constraint in the development of end-to-end deep learning models for African languages is the limited availability of large-scale, clean corpora because these models feed on ever-growing data that is abundant online. This constraint is a significant issue for low-resource languages due to the lack of high-quality corpora to learn from.
+
+The issue lies with the paradigm of prioritising quantity as an immediate goal, resulting in datasets that are often noisy, inconsistent and poorly representative of the languages they capture. The issue is a lack of quality data, which is compounded by the fact that existing corpus creation techniques are slow and require manual input, thus revealing a gap for automation in data collection and curation tailored for underrepresented African languages. Existing approaches focus on addressing data scarcity after collection, through techniques such as data augmentation or transfer learning. Consequently, they work with data regardless of its quality, but for languages such as Sesotho, which faces additional complexities such as orthographic variations between South African and Lesotho conventions and limited digital presence, the need for a quality-first, automated approach to corpus building is pertinent.
+
+This project proposes the design and evaluation of an automated AI-driven pipeline for data collection and curation of digital text in Sesotho to reduce manual effort and improve the quality of corpus development.
+
+
+\section{Preliminary Literature Review}
+\label{sec:review}
+
+Natural language processing (NLP) is an evolving field of machine learning that typically requires large datasets to improve performance. However, for low-resource languages with smaller datasets, it is an issue that excludes billions of speakers from the NLP digital space. Low-resource languages can be an umbrella term depending on the conditions. Low-resource languages could focus on threatened languages, widely spoken languages that are seldom addressed in NLP research, or on high-resource languages in specialised domains \citep{Hedderich2021}. \citet{Shahid2025} defines low-resource languages as those that historically lack the quality datasets necessary to train AI models and highlights the paradoxical nature of defining low-resource languages as a lack of datasets, despite having millions of speakers. Thus, for this literature review, the broader definition of low-resource language will be used. In machine learning, it is recognised that a learning algorithm's performance depends on the provided parameters and training data; therefore, there is a need for complete datasets that encompass a broad spectrum of expression, nuances, and dialects to understand and perform tasks effectively. Thus, it is necessary to create new datasets and enhance the quality of existing datasets. 
+
+A survey of recent approaches to NLP in low-resource scenarios states that the significant solutions to insufficient corpora are generating additional data or reducing reliance on high-quality, human-annotated datasets of significant volume (i.e., large-scale gold-standard supervision) to train, evaluate, and fine-tune supervised machine learning tools \citep{Hedderich2021}. These solutions include data augmentation which creates new training instances from small, existing corpora by modifying its features while preserving the original labels, distant supervision which automatically generates labeled data by pairing unlabeled text with external knowledge sources like dictionaries or rule of thumb or trial-and-error approaches to solving language processing problems quickly,i.e. heuristics and lastly cross-lingual projections which project labels from high-resource language corpus into low resource language using parallel text. These techniques focus on model adaptation and data augmentation, while data collection and curation receive less attention, particularly in African languages.
+
+\vspace{1em}
+Despite the push for NLP advancements in underrepresented languages, most of the languages studied have been non-African and when African languages are studied, it is typically not southern African languages that are studied \citep{joshi-etal-2020-state}. A survey of sub-word language models for southern Bantu languages notes that the number of publications for agglutinative and morphologically rich languages is unbalanced, with languages such as Turkish, Arabic, and Finnish having more publications than languages such as isiZulu, kiSwahili, and other Bantu languages \citep{Kambarami2021}. Although the survey focused on a subset of NLP, it could be indicative of a larger trend within the space. 
+
+Yet a comprehensive recent survey of African NLP research reveals a more complex picture. \citet{alabi-etal-2025-charting} analyzed 884 papers published between 2019 and 2024 and found that South African languages including Sesotho appear among the top 20 most researched African languages—alongside Tswana, Tsonga, and Northern Sotho—demonstrating significant scholarly attention relative to other African languages. This suggests that the neglect identified by \citet{Kambarami2021} and \citep{joshi-etal-2020-state} is not uniform; South African languages benefit from institutional infrastructure (SADiLaR, university programs) that generates research activity. However, \citet{alabi-etal-2025-charting} also note that 126 of 401 dataset-creating papers relied on translated texts, which "lack cultural contexts" and "amplify bias towards Western concepts." This finding reframes the problem: for Sesotho, the challenge is not merely absence of research but rather the presence of research that has not yet solved fundamental quality issues—particularly the lack of authentic, culturally grounded corpora.
+
+This gap between research quantity and resource quality is evident in the early constraints of the data pipeline for Sesotho. \citet{Sibeko2024} discusses the challenges faced in corpus studies for a Sesotho text readability project, noting that when text data is available, it shows inconsistencies and variability in quality, style, and linguistic features. Crucially, web-crawled Sesotho content consists largely of Wikipedia translations that exhibit inconsistent orthographies, with both South African Sesotho (SAS) and Lesothan Sesotho (LS) conventions appearing within the same text \citep{Sibeko2024}. A proposed solution to this problem could be semi-automated or AI-assisted corpus-building methods that address both language identification and orthographic variation at the point of collection.
+
+\vspace{1em}
+An article on data collection methods and corpus curation for Swahili addressed the lack of high-quality data by identifying 12 domain-specific categories and collecting documents from authoritative Tanzanian public websites and reports. It used Python libraries such as PyPDF2 and python-docx to aggregate content from PDF and docx formats, and then cleaned the text using regular expressions to remove noise from the data \citep{Masua2024}. Quality control was implemented through manual reviews and a feedback loop with linguists to ensure linguistic requirements were met. This article employs a combination of automation and manual intervention. Automation was used to aggregate PDF and docx documents and to extract text using libraries, but identifying suitable categories and exploring authoritative literature were manual, as was quality assurance. Hence, the balance between automation and human interaction was small. While this is an improvement over traditional data collection methods, it still requires human interaction, which can be labour-intensive for significant corpora creation, so a more automated approach can be more efficient.
+
+The linguistic domain could take inspiration from other fields that have explored automation strategies for large-scale data collection. \citet{Zhou2024} sought to develop and validate an intelligent, automated data-collection tool for real-world cohort studies of chronic hepatitis B. This tool was significant because manual data collection was labour-intensive, error-prone, unstructured, and unscalable. They used an OCR model (PaddleOCR) for accurate recognition of printed, handwritten, and scene text, achieving human-level accuracy while being 17.8x faster. This study's methodology could be adapted for African languages by acquiring documents through web crawling, applying OCR preprocessing to align and remove noise, performing OCR inference using a language-specific model, conducting layout analysis and entity extraction, and producing structured output with a human verification interface; resulting in an automated corpus with accuracy approaching human levels but at significantly greater speed. Ultimately, there is less literature on data collection automation, making the need for it more relevant. This gap supports the need for automated solutions that balance efficiency with quality. 
+
+\vspace{1em}
+Data quality determines how well a model performs its tasks, and high-quality data helps avoid false correlations, thus it is important. An article discussing the problem of unintended biases, or spurious correlations, in NLP datasets states that they cause models to perform well on benchmarks but fail to generalise to real-world or out-of-distribution data \citep{Mishra2020}. \citet{Mishra2020} state that dataset quality was measured by examining human performance and model accuracy; models achieving high accuracy were interpreted as indicating good data. In reality, the article cites numerous studies showing the models were exploiting annotation artefacts, the unconscious writing habits of the crowd workers; therefore, higher benchmark scores signal low data quality. The dominant paradigm was to create first and clean later, where large amounts of biased data were generated by crowd workers, and algorithms filtered out bad samples, consequently the resources used to create the biased data were wasted. 
+
+
+These broader concerns are prevalent in the context of African language corpora. \citet{Adebara2022} provides a health check of existing corpora for African languages, stating that they are bleak. \citet{Adebara2022} provides concrete examples, such as the massive Flores-101 dataset, which contains 12.4\% incorrect tone marks, and FastText embeddings estimate that 135K out of 150K words in the Yoruba corpus are from languages such as English, French, and Arabic.
+
+The findings demonstrate corpora deficiencies include scarcity and structural inaccuracies at the lexical/orthographic level. When models train on inaccurate corpora, they produce incorrect representations and degraded performance, leading to unreliable outputs. Consequently, increasing the dataset size without quality assurance can result in wasted resources and poorer performance. 
+\vspace{2em}
+
+As discussed earlier in the literature review, \citet{Sibeko2024} noted that web-crawling methods used inconsistent orthographies for South African Sesotho (SAS) and Lesothoan Sesotho (LS), which affect corpus quality. Variations in orthographies affect NLP model performance, as evidenced by a study of Nigerian Pidgin. \citet{lin-etal-2024-modeling} demonstrated how orthographic variations from the lack of a standardised writing system directly impact corpus quality that hinders downstream NLP tasks such as machine translation and sentiment analysis. The results of the paper prove that more variants ensure better model performance, because in sentiment analysis, models trained on data with varying orthographies there was an increase in F1 score with BERT having an increase  $\pm$ 0.51 and RoBERTa having an increase of $\pm$ 2.16, BLEU improving up to $+$ 0.56, Cross-Entropy becoming lower with orthographic augmentations, and 561 variants yielding a BLEU score improvement of  0.10 and 745 variants yielding a BLEU score improvement of 0.56 \citep{lin-etal-2024-modeling}. Therefore, models become better at classifying sentences, translation quality improves, and model confidence and accuracy increase, leading to more variants and better model performance. Thus, the inclusion of orthographic variation for Sesotho could mark the difference between a high-quality corpus and a low-quality corpus. 
+
+Unlike Nigerian Pidgin, which lacks any standardised orthography, \citet{Makutoane2022} states that Sesotho has two competing orthographies that are complementary and independent, one used in South Africa and the other used in Lesotho, which systematically creates variations in Sesotho orthography that need to be addressed. SAS and LS have differing consonant representation and semi-vowel treatment, while SAS omits diacritic marks in its writing, while LS preserves them. These variations effectively enable source origin detection, preserve original spellings, document diacritic usage patterns, and apply source-appropriate tokenisation based on orthographic conventions. Although orthographic variation is a practical barrier to model performance, it can be meaningfully applied only after the language of the collected text has been correctly identified. 
+\vspace{1em}
+
+
+Beyond orthographic variation, a fundamental challenge in building a Sesotho text corpus is correctly identifying which texts are Sesotho. \citet{kargaran2023glotlid} demonstrated that language identification (LID) for low-resource languages is complicated by the high volume of high-resource languages in web data. This study revealed that the false positive rate (FPR) is more important than F1 scores for corpus creation, because errors are asymmetric: a false negative means missing a sentence in Sesotho, but a false positive means adding non-Sesotho text to the corpus that can never be removed. When processing web data for high-resource languages, even small FPR rates could flood the corpora of low-resource languages; consequently, the Sesotho corpus would be flooded with non-Sesotho text. This problem is exacerbated by out-of-model cousin errors, where text not covered by a language identification (LID) model is misclassified as its closest relative covered by that model. As a solution, \citet{kargaran2023glotlid} developed GlotLID to address these issues by covering 1665 languages, including Sesotho and its major cousins, achieving a near-perfect F1 score of 1 and an FPR of 0.00022 on the UDHP benchmark. For this work, integrating GlotLID into the corpus pipeline ensures that Sesotho text can be reliably distinguished, providing a solid base for the pipeline.
+
+
+\vspace{1em}
+Given prior findings on dataset bias and corpus health deficiencies \citep{Mishra2020,Adebara2022}, systematic evaluation becomes necessary to verify corpus quality. For the Sesotho corpus construction, quality will be measured by language purity, orthographic consistency, and downstream NLP task performance to indicate the corpus's suitability for practical applications.
+\vspace{1em}
+
+First, language purity (how much of the corpus is actual Sesotho) must exceed 90\% in the manual audit. Following \citet{kreutzer-etal-2022-quality}, a random sample of 100 sentences from pipeline output will be annotated using their binary taxonomy (correct vs error). Achieving 90\% correct sentences would position the Sesotho corpus above the median for low-resource languages in their study, where 42\% of corpora fell below 50\% purity. Second, orthographic awareness will be measured by the pipeline's ability to correctly classify South African versus Lesotho variants on a held-out test set of 200 manually labelled sentences, with a target F1-score $\geq$ 0.85. This threshold acknowledges \citet{Makutoane2022} documentation of systematic orthographic differences while allowing for ambiguous edge cases. Third, downstream utility will be demonstrated through improved performance on a text classification task: a model trained on pipeline-curated data must achieve a statistically significantly higher F1-score ($p < 0.05$) than the same model trained on an equivalent volume of unfiltered web data, using 5-fold cross-validation. This extrinsic measure, aligned with the readability work of \citep{Sibeko2024}, provides the ultimate validation that quality improvements translate into practical benefit. This is what this project will define by quality.
+
+
+\section{Problem Statement}
+NLP development for underrepresented African languages faces the issue of prioritising data quantity over data quality resulting in noisy, inconsistent datasets. Existing corpora methods are labour-intensive and do not address the earlier bottleneck of quality corpus creation instead focus on the later issue of data scarcity using data augmentation thus revealing a gap in the need for AI-driven techniques for efficient corpus development in languages such as Sesotho.
+
+\section{Hypothesis}
+An automated pipeline incorporating language identification and orthographic variation detection will produce a high-quality Sesotho corpus which will improve performance on downstream NLP tasks better than unflitered raw data.
+\vspace{1em}
+\section{Research objectives}
+\begin{itemize}
+        \item  To analyse limitations in existing Sesotho corpora and web-based data sources.
+       \item 	To develop an automated pipeline that produces high-quality Sesotho text.
+       \item To develop mechanisms to reduce cross-lingual contamination and managing orthographic variation within collected Sesotho text.
+       \item To evaluate the effectiveness of the proposed pipeline in improving corpus consistency and suitable for downstream NLP tasks. 
+       \item To establish and validate measurable quality thresholds for Sesotho corpus development, including language purity ($\geq$ 90\%), orthographic classification accuracy (F1 $\geq$ 0.85), and downstream task improvement ($p < 0.05$), thereby providing replicable success criteria for future low-resource language pipeline projects.
+\end{itemize}
+\vspace{1em}
+\section{Approach}
+The project will follow a modular development approach, with each pipeline component built and tested independently before integration. The pipeline will operate in five sequential phases. Phase 1: Data Collection will prioritise government websites, online newspapers, and scanned books over social media to align with the quality-first goal, with OCR carefully tuned to handle Sesotho-specific characters accurately. Phase 2: Language Identification will process all collected text using GlotLID \citep{kargaran2023glotlid} to verify it is Sesotho, addressing the critical problem of cross-lingual contamination. Phase 3: Orthographic Classification will label text as either South African (SAS) or Lesotho (LS) convention using one of several approaches—a rule-based baseline using anchor graphemes (e.g., SAS 'kg' vs. LS 'kh'), a character-level n-gram model trained to distinguish statistical spelling patterns, or a dictionary-lookup hybrid using specialised lexicons—with the final choice documented based on empirical performance. Phase 4: Metadata Enrichment and Structuring will wrap cleaned text in metadata tags to produce a machine-ready corpus in JSONL format, with each entry including the cleaned text, language ID, orthography tag, purity score, source information, and token count. Phase 5: Quality Assurance and Validation will manually audit random samples to verify language purity and orthographic classification accuracy as a one-time evaluation of pipeline performance.
+
+The pipeline's effectiveness will be assessed through both intrinsic and extrinsic measures. Intrinsic evaluation will measure language purity against manual audit of 100 sentences following \citet{kreutzer-etal-2022-quality}'s taxonomy, orthographic classification accuracy on 200 manually labelled sentences, and OCR Word Error Rate on gold-standard pages. Extrinsic evaluation will conduct a controlled experiment comparing identical models trained on two 10,000-sentence datasets: raw unprocessed web data versus pipeline-curated data. If curation improves quality, the model trained on curated data should exhibit lower perplexity (indicating it learned cleaner patterns), better semantic word representations, and statistically significant improvement ($p < 0.05$) on a text classification task using 5-fold cross-validation, following \citet{Sibeko2024}'s readability work. Success requires language purity exceeding 90\%, orthographic classification F1-score $\geq$ 0.85, and significant downstream task improvement—thresholds grounded in \citet{kreutzer-etal-2022-quality} and \citet{Makutoane2022}.
+\vspace{1em}
+\section{Limitations}
+\begin{itemize}
+    \item The pipeline may not achieve the scale of high-resource language corpora due to limited Sesotho digital presence.
+    \item The text available online may overrepresent certain domains, such as religious texts or government documents, while underrepresenting others.
+    \item The orthographic classifier may misclassify ambiguous text with mixed orthographies. 
+    \item  Code-switching detection may be incorrectly handled.
+\end{itemize}
+
+\section{Timeline}
+
+\begin{tabular}{p{3cm}|p{10cm}}
+\toprule
+\textbf{Deadline} & \textbf{To do} \\
+\midrule
+
+23 February & Draft proposal due \\
+
+24 February & Preparation for Seminar 1 \\
+
+25 February--03 March &
+\parbox[t]{10cm}{
+Continue reviewing literature with focus on:
+\begin{itemize}[leftmargin=*, nosep]
+    \item Sesotho corpus studies
+    \item Web data availability for Sesotho
+    \item Existing Sesotho datasets and their limitations
+\end{itemize}
+} \\
+
+03 March & Seminar 1: Proposal presentation \\
+
+04 March & Learn web scraping and OCR for data collection \\
+         & Integrate feedback from Seminar 1 \\
+
+10 March & Learn GlotLID for language identification \\
+         & Test language identification and data collection pipeline on a small sample \\
+
+16 March & Final proposal submission \\
+         & Review additional literature on Sesotho web presence and corpus gaps \\
+
+17 March & Create orthography variation detector \\
+         & Review additional literature \\
+
+17 April & Learn skills for next pipeline stage \\
+         & Review additional literature \\
+
+04 May & Literature review due \\
+
+05 May & Continue implementing next pipeline stage \\
+       & Test previous stage \\
+
+07--14 July & Seminar 2: Project implementation \\
+
+15 July & Integrate feedback from Seminar 2 \\
+        & Continue developing next stage \\
+        & Test previous stage \\
+
+15 August & Complete draft of research report \\
+          & Implement next stage \\
+          & Test next stage \\
+
+01 September & Review draft research paper \\
+             & Begin short paper \\
+
+18 September & Draft research report due \\
+
+30 September & Review short paper \\
+
+02 October & Short paper due \\
+
+03 October & Analyse pipeline results \\
+
+12--14 October & Seminar 3: Results presentation \\
+
+15 October & Integrate feedback from Seminar 3 \\
+
+16 October & Final research report due \\
+
+19 October & Finalise website \\
+
+20 October & Review and edit short paper and project submission \\
+
+06 November & Corrected short paper due \\
+            & Corrected project submission due \\
+
+\bottomrule
+\end{tabular}
+\vspace{10em}
+\bibliographystyle{ruauthordate}
+ 
+\bibliography{early_proposal}   	% load in the citation info from ref.bib
+
+
+\end{document}
+
+
+
+

@@ -1,14 +1,16 @@
 {
-  "corpus_size": 302,
-  "train_size": 241,
-  "test_size": 61,
+  "corpus_size": 8626,
+  "train_size": 6900,
+  "test_size": 1726,
   "label_distribution": {
-    "SAS": 200,
-    "LS": 102
+    "SAS": 5362,
+    "LS": 3264
   },
-  "rule_based_f1": 0.9435,
-  "learned_f1": 0.9645,
+  "normalisation": "lowercase + strip_punctuation (preserves diacritics)",
+  "rule_based_f1": 0.4111,
+  "learned_f1": 0.8714,
   "target_f1": 0.85,
   "target_met": true,
-  "beats_baseline": true
+  "beats_baseline": true,
+  "demo_accuracy": "4/4"
 }

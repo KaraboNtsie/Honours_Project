@@ -1,0 +1,372 @@
+\documentclass[11pt,a4paper]{article}
+\usepackage[top=42pt,bottom=42pt,left=70pt,right=70pt]{geometry}  % to make pages wider
+
+\usepackage{amsmath}
+\usepackage{amsfonts}
+\usepackage{graphicx}  % for figures etc.
+\usepackage{url}  % to handle URLs 
+\usepackage[comma,authoryear]{natbib}  % for author-date ref style --  allows \citet (textual), and \citep (parenthesized)
+\usepackage[hidelinks]{hyperref}
+\hypersetup{allcolors=[rgb]{0, 0, 0.33},colorlinks=true}
+
+\renewcommand {\cite} {\citep}  % default for cite is citet in natbib - changes it to citep
+\renewcommand\bibname{References}    % if not using newrucsthesis sty file
+
+\usepackage{booktabs}
+\usepackage{array}
+\usepackage{enumitem}
+\usepackage{amssymb}
+
+\usepackage{setspace}
+\doublespacing
+
+\title{Methodology}
+\author{g23n7880 }
+\date{September 2026}
+
+\begin{document}
+
+\maketitle
+
+\subsection{Dataset and Data Selection}
+\label{sec:data_selection}
+
+The construction of a supervised orthographic classifier requires training data in
+which the orthographic variant of each sentence is known with confidence. For a
+low-resource language such as Sesotho, no pre-existing labelled dataset covering
+both the South African Sesotho (SAS) and Lesotho Sesotho (LS) orthographic
+conventions simultaneously was available at the time of this study. This section
+documents the sources selected to constitute the training corpus, the rationale
+for each selection decision, and the labelling strategy employed to assign
+orthographic variant labels without manual sentence-level annotation.
+
+\subsubsection{Labelling strategy: source-based provenance}
+
+Ground truth labels for classifier training were assigned using a
+\textit{source-based provenance} strategy: sentences inherit the orthographic
+variant label of the institutional source from which they were collected, rather
+than from direct manual inspection of each sentence. [read MINZ 2009 paper]
+
+This condition was verified empirically prior to classifier training. For each
+source, the average occurrence of variant-discriminating graphemic markers
+per sentence was computed using the substitution rules documented by
+\citet{makutoane2022people}. Specifically, the semi-vowel pairs
+\textit{ea}/\textit{oa} (LS) versus \textit{ya}/\textit{wa} (SAS), and
+the consonant cluster pairs \textit{kh}/\textit{ch} (LS) versus
+\textit{kg}/\textit{tjh} (SAS). LS-labelled sentences yielded a mean LS
+marker density of 0.89 per sentence and a mean SAS marker density of 0.00.
+SAS-labelled sentences yielded a mean SAS marker density of 1.34 per sentence
+and a mean LS marker density of 0.00. The complete absence of cross-variant
+markers in each group confirms that source provenance reliably identifies
+orthographic variant and that source-based labelling is a valid ground truth
+strategy for this corpus.
+
+\subsubsection{South African Sesotho sources}
+
+\paragraph{Vuk'uzenzele — DSFSI corpus.}
+The primary source of SAS training data is the Vuk'uzenzele corpus maintained
+by the Data Science for Social Impact (DSFSI) research group at the University
+of Pretoria \citep{marivate2020investigating}. Vuk'uzenzele is the South African
+government's official public information magazine, published in all eleven
+official languages including Sesotho. The magazine is produced under South
+African government style guidelines, which mandate adherence to the SAS
+orthographic standard formalised in 1959. The DSFSI corpus provides
+sentence-aligned English--Sesotho pairs extracted from digitised magazine
+editions spanning 2018 to 2022, representing 84 editions. The Sesotho component
+of the simple sentence-alignment output was used, extracting the target-language
+column from each aligned CSV file.
+
+This source was selected on three grounds. First, its institutional origin
+guarantees SAS orthographic consistency, since government publications are
+produced to a standardised style. Second, it represents the domain of public
+information and civic communication which is underrepresented in existing
+Sesotho resources, which are heavily skewed toward religious and legislative
+text \citep{kwon2026afroscope}. Third, the corpus is publicly available under an
+open licence, ensuring reproducibility.
+
+\subsubsection{Lesotho Sesotho sources}
+
+\paragraph{Sesotho News (SN) dataset.}
+The primary source of LS training data is the Sesotho News dataset introduced
+by \citet{mokhosi2024sesotho}, available from Zenodo (record 10531959). The
+dataset comprises 2,401 news headlines manually scraped from two Lesotho-based
+online newspapers and annotated for sentiment analysis and aspect-based sentiment
+analysis. Headlines were collected using the Lesotho orthographic standard, as
+confirmed by the source publication. Two files were used from the dataset:
+\texttt{NewsSA.txt} and \texttt{NewsABSA.txt}, providing sentence-level LS text
+across a news domain.
+
+This source was selected because it is the only existing Sesotho dataset that
+explicitly documents its orthographic standard, is independently peer-reviewed,
+covers the news domain, and provides sufficient sentence-level granularity for
+classifier training. Its use here is consistent with its intended purpose: the
+authors explicitly release it for NLP research on Sesotho. Notably, the same
+dataset is used later as the evaluation benchmark for the downstream sentiment
+classification task, creating a direct methodological connection between the
+training corpus and the extrinsic quality evaluation.
+
+\paragraph{Nalibali children's stories.}
+A supplementary LS source was obtained by scraping the Nalibali reading
+campaign website (\url{https://nalibali.org}), a South African literacy
+initiative that publishes multilingual children's stories in all eleven official
+languages. The Sesotho stories are available at the \texttt{?lang=st-ls} URL
+parameter, denoting the Lesotho Sesotho orthographic variant. Story text was
+extracted from the \texttt{elementor-widget-text-editor} content containers
+using BeautifulSoup, with navigation elements, author attributions, and
+discussion questions excluded via pattern matching.
+
+This source was selected to increase LS domain diversity. The SN dataset
+provides news headlines, which are short, syntactically compressed, and
+domain-specific. Children's stories provide longer, more syntactically complete
+sentences across narrative and descriptive registers, partially mitigating the
+domain skew that \citet{kwon2026afroscope} identify as a systemic quality
+failure in African language corpora. Nalibali is a registered non-governmental
+organisation with a citable institutional identity, satisfying the requirement
+for source-based provenance reliability.
+
+\subsubsection{Corpus composition}
+
+Following GlotLID verification, deduplication, and a minimum length filter of
+five words, the training corpus comprised 302 sentences: 200 SAS sentences
+from Vuk'uzenzele and 102 LS sentences from the SN dataset. The class
+imbalance of approximately 2:1 reflects the relative availability of
+digitised text in each orthographic variant rather than a sampling decision,
+and is addressed during classifier training through balanced class weighting
+rather than oversampling, to avoid introducing artificial distributional
+regularities into the feature space. The corpus size, while modest relative
+to high-resource standards, is appropriate for a proof-of-concept classifier
+demonstrating the viability of the orthographic distinction detection approach
+on a task where, as Section 3.4 establishes, the discriminating signal is
+concentrated in a small and consistent set of sub-word character patterns. 
+
+The corpus has grown to around 5000 sentence
+
+
+\section{Implementation}
+The pipeline was implemented in Python 3.11 across three modular scripts, each corresponding to a discrete pipeline stage. The modular architecture follows design principle articulated by \citet{suchomel2020better} that pipeline components should be independently testable before integration, so that errors introduced at one stage do not propagate silently to another stage. A similar modular approach is adopted by \citet{de2024data} in the Labadian Crawler for Tetun, and by \citet{gumede2025creating} in the ULPDO isiZulu corpus construction, both of which combine automated processing with targeted human input at key quality decision points.
+
+\subsection{Stage 1: Semi-Automated Collection and Identification}
+Data collection followed a semi-automaated approach in which  human judgement was exercised at the source-selection stage, with all subsequent processing automated. This design is consistent with \citet{gumede2025creating} hybrid approach as humans provide expert opinion on which sources are appropriate while automation handles extraction, verification, and structuring at scale. The distinction was made due to a narrowing of the scope for the project. The semi automated process is favoured by \citet{barbaresi2013challenges} as \citet{barbaresi2013challenges} argues that crawling without expert knowledge of the target language is liable to produce systematic distortions, since search engines and broad crawlers favour English content and structurally well-connected domains. For a language like Sesotho, whose digital presence is concentrated in specific institutional and community domains rather than broadly distributed across the web, targeted source selection by a research with knowledge of the language community provides more a reliable starting point than unrestricted automated discovery.
+
+Three seed sources were selected, as described in Section~\ref{sec: data_selection}. For each source, text was retrieve using the Python \texttt{requests} library with a standard browser user-agent string to avoid bot rejection. HTML content was parsed using BeautifulSoup4, with content extracted from semantically appropriate containers identified through prior page inspection for each source. For the NaliBali source, which renders content through an Elementor page builder framework, text was extracted from \texttt{div} elements carrying the CSS class \texttt{elementor-widget-text-editor}, identified through diagnostic inspection of the page structure. 
+
+Sentence segmentation was performed by splitting on terminal punctuation characters which are full stop, exclamation mark, question mark, and newline. Segements of more than three words or more were retained which excluded isolated headers, navigation lables, single-word or two-word fragments that are not linguistically usable while retaining grammatically complete short sentences typical of new headline and children's story text. \citep{de2024data} adopt a comparable minimu word threshold in their Tetun corpus pipeline.
+
+Each candidate sentence was submitted individually to GlotLID \citep{kargaran2024glotcc}, a fastText-based language identification model covering 1655 language varieties. GlotLID was selected for its false positive rate minimisation over raw F1 score which is critical because incorrectly included text produces irreversible contamination while incorrectly excluded text is a recoverable loss \citep{kreutzer-etal-2022-quality}. This asymmetry is particularly consequential for low resource languages like Sesotho, which \citet{kargaran2024glotcc} demonstrate is prone to cousin-language misclassifications when LID tool with inadequate coverage are used. Sentences where GlotLID's top-1 prediction was \texttt{sot\_Latn} with a confidence score at or above 0.7 were retained; all others were discarded.
+
+The confidence threshold of 0.7 was determined empirically through diagnostic testing on known Sesotho sentences from the Mokhosi dataset prior to full collection. Short headlines of four to six words recieved GlotLID scores between 0.85 and 0.91, indicating that the conventional threshold of 0.9, calibrated against longer texts in high-resource settings, would systematically reject valid LS content. \citet{fedorova2026openlid} document an equivalent precision-coverage trade-off in their evaluation of OpenLID-v3, finding that improving precision threshold removed up to 45\% of samples for minority languga varieties. The 0.7 threshold preserves short headline sentences while maintaining reliable separation from closely related languages. Diagnostic  evaluation confirmed that Sestswana (\texttt{tesn\_Latn}) and Sesotho sa Leboa (\texttt{nso\_Latn}) consistently scored below 0.2 on Sesotho-labelled sentences, providing a clear confidence margin between acceptance and rejection.
+\subsection{Stage 2: Cleaning}
+The cleaning stage applies four operations in sequence, each
+motivated by a specific quality concern identified in the literature.
+
+\textbf{Unicode normalisation to NFC form} was applied first using
+Python's \texttt{unicodedata.normalize} function. NFC normalisation
+ensures that diacritical marks are represented in their canonical
+composed form rather than as decomposed sequences of base character
+and combining diacritic. This step directly addresses the sub-lexical
+degradation documented by \citet{de2007automatic}, who
+demonstrate that OCR processing and non-standard text encoding
+pipelines systematically strip or misrepresent diacritical marks in
+African language text. For Lesotho Sesotho specifically, diacritical
+preservation is not merely a formatting concern: LS orthography
+encodes phonological distinctions through diacritics that SAS
+orthography omits \citep{matlosa2017sesotho}, meaning that incorrect
+normalisation would destroy a primary signal for the orthographic
+classifier downstream.
+
+\textbf{URL removal} was applied using a regular expression matching
+\texttt{http} or \texttt{https} strings, eliminating hyperlink
+artefacts introduced during web extraction that would otherwise
+contribute meaningless character sequences to the feature space.
+
+\textbf{Whitespace normalisation} collapsed multiple consecutive
+spaces, tabs, and newlines into single spaces, and stripped leading
+and trailing whitespace. This step addresses formatting artefacts
+introduced by HTML rendering and line-break
+conventions that vary across source formats.
+
+\textbf{Deduplication} removed exact duplicate sentences using
+pandas \texttt{drop\_duplicates} on the text column.
+\citet{tatariya2024good} document that up to 40\% of
+web-crawled content consists of exact duplicates, with
+paragraph-level duplication reaching 70\% in some Common Crawl
+snapshots. Deduplication at the sentence level ensures that
+repetitive boilerplate content such as navigation text, repeated
+disclaimers, and templated phrases common in government and
+institutional sources does not inflate corpus statistics or
+bias classifier training by overrepresenting particular character
+sequences. This concern is also documented by
+\citet{cahyawijaya2023nusawrites}, who observe that Buginese
+Wikipedia data exhibited very low lexical diversity despite a large
+token count, attributable to boilerplate repetition that deduplication
+would have addressed.
+
+A \textbf{minimum length filter} of five words was then applied,
+removing fragments that do not constitute usable linguistic content.
+The five-word threshold is consistent with the minimum meaningful
+sentence length assumed in low-resource corpus construction
+pipelines \citep{de2024data}.
+
+\subsection{Stage 3: Orthographic Classification}
+The orthographic classification stage consitutes the novel contribution of the piepline where no tool automatically distinguishes SAS from LS orthography at the sentence level. This stage was implmented as a two-component system being a rule-based basline classifer and a trained character n-gram classifier, with both evaluated on a held-out test set to assess the value added by the learned model over the explicit rule encoding.
+
+\subsubsection{Rule-Based Baseline}
+\label{sec:rulebased}
+
+The rule-based classifier implements the substitution rules documented by \citet{makutoane2022people} directly as Python
+marker-counting logic. For each sentence, the occurrence count of LS
+markers (\textit{ea}, \textit{oa}, \textit{kh}, \textit{ch},
+\textit{li}) and SAS markers (\textit{ya}, \textit{wa},
+\textit{kg}, \textit{tjh}) are computed, and the sentence is
+assigned the variant label corresponding to the higher marker count,
+with SAS assigned as the default in the case of a tie. The marker
+sets were derived directly from Makutoane's documented substitution
+table, requiring no training data.
+
+This baseline serves two purposes. First, it operationalises the
+existing linguistic knowledge about the SAS/LS distinction,
+providing a performance ceiling achievable through explicit rule
+encoding. Second, it provides a principled lower bound against which
+the learned classifier can be evaluated. If the trained model does
+not surpass the rule-based baseline, this would indicate that the
+character n-gram features capture nothing beyond what the literature
+already documents.
+
+\subsubsection{Character N-Gram Logistic Regression Classifier}
+\label{sec:learned}
+
+The learned classifier was implemented as a scikit-learn
+\texttt{Pipeline} combining a \texttt{CountVectorizer} with a
+\texttt{LogisticRegression} estimator. The pipeline abstraction
+ensures that the same vectorisation parameters applied during training
+are applied identically during inference on new text, eliminating
+the risk of train-test leakage through inconsistent preprocessing.
+
+\paragraph{Feature representation.}
+Character n-grams spanning lengths two to four
+(\texttt{ngram\_range=(2,4)}, \texttt{analyzer='char\_wb'}) were
+selected as the feature representation. The character word-boundary
+analyser (\texttt{char\_wb}) pads each token with spaces before
+extracting n-grams, ensuring that boundary characters are captured
+as informative features rather than discarded.
+
+Character-level features are the appropriate representation for
+the SAS/LS classification task because the orthographic distinction
+is sub-lexical. The discriminating signal lies in character sequences
+such as \textit{ea} and \textit{oa} (LS) versus \textit{ya} and
+\textit{wa} (SAS), which appear within words rather than as
+independent tokens. Word-level features would require the exact
+surface form of a discriminating word to appear in a sentence before
+any signal is captured; character n-grams capture orthographic
+patterns regardless of the specific word in which they appear.
+This property is critical for a morphologically rich agglutinative
+language like Sesotho, where a single root generates thousands of
+inflected surface forms through prefixation and suffixation
+\citep{kambarami2021computational}. Character n-gram models have
+established precedent in the similar-language and dialect
+identification literature: \citet{cianflone2016n} report that
+character n-gram models achieved 88.45\% accuracy on the VarDial
+2016 Discriminating Similar Languages shared task, outperforming a
+character-based convolutional neural network on the same data and
+closely approaching the top system at 89.38\%. Their analysis
+confirms that n-grams of size 7--8 peak in accuracy for similar
+language discrimination, though for a binary classification task
+with highly consistent orthographic signal, shorter n-grams of
+size 2--4 are sufficient and reduce sparsity.
+\citet{de2024data} similarly demonstrate that a Multinomial
+Naive Bayes classifier with 5-gram characters achieved 99.77\%
+accuracy for Tetun language identification, confirming character
+n-gram effectiveness for low-resource language discrimination.
+
+The n-gram range of 2--4 was chosen to capture both the core
+two-character substitution pairs (\textit{ea}/\textit{ya},
+\textit{oa}/\textit{wa}) and the longer consonant cluster
+divergences (\textit{tjh}/\textit{ch}, \textit{kgh}/\textit{kh}).
+Unigrams provide no discriminative signal since individual
+characters are shared across both variants. Extending beyond
+4-grams would increase feature dimensionality without adding
+signal for the specific substitutions documented by
+\citet{makutoane2022people}.
+
+\paragraph{Diacritic preservation.}
+The \texttt{strip\_accents} parameter was explicitly set to
+\texttt{None}, overriding the scikit-learn default which strips
+diacritical marks during vectorisation. This override is
+linguistically motivated: LS orthography preserves diacritics
+that SAS orthography omits \citep{matlosa2017sesotho}. Stripping
+diacritics during vectorisation would destroy the orthographic
+signal they carry, degrading classifier performance on the LS
+class and producing a feature space that does not reflect the
+actual textual properties of the two variants.
+
+\paragraph{Class weighting and regularisation.}
+The \texttt{class\_weight='balanced'} parameter adjusts sample
+weights inversely proportional to class frequencies, compensating
+for the 200 SAS / 102 LS imbalance in the training corpus without
+requiring oversampling. Oversampling was avoided because it would
+introduce artificial regularity into the LS character distribution
+by replicating existing sentences, potentially causing the
+classifier to overfit to specific headline constructions rather
+than general orthographic patterns. The regularisation parameter
+$C$ was set to 1.0, the scikit-learn default, which was retained
+as no systematic overfitting was observed on the held-out test
+set.
+
+\paragraph{Evaluation metric.}
+Macro-averaged F1 was used as the primary evaluation metric,
+assigning equal weight to both classes regardless of their
+frequency in the test set. This choice aligns with the pipeline's
+design goal of handling both SAS and LS reliably, not merely
+achieving high overall accuracy by exploiting the majority class.
+
+
+\subsection{Data Processing and Sampling }
+
+The verified and cleaned corpus was split into training and test
+sets using an 80/20 ratio with stratified sampling, preserving the
+SAS/LS class proportions in both partitions. Stratification was
+applied because the 2:1 class imbalance would otherwise risk
+concentrating LS sentences disproportionately in one split,
+producing evaluation results that do not reflect the classifier's
+generalisation across both variants. The split yielded 241 training
+sentences (160 SAS, 81 LS) and 61 test sentences (40 SAS, 21 LS).
+A fixed random seed (\texttt{random\_state=42}) was applied to
+ensure reproducibility.
+
+\subsection{Parameter Tuning}
+
+No hyperparameter search was conducted beyond the design decisions
+documented in Section~\ref{sec:learned}. The n-gram range, maximum
+feature count (1,000), classifier type, and regularisation
+parameter were set on the basis of the linguistic properties of
+the task and established practices in the similar language
+identification literature \citep{cianflone2016n,
+de2024data} rather than through data-driven optimisation.
+This approach was adopted to avoid the risk of overfitting
+hyperparameters to a small held-out test set of 61 sentences, which
+would provide unreliable estimates of generalisation performance.
+
+\subsection{Evaluation Pipeline}
+The classifier was trained by calling \texttt{pipeline.fit(X\_train,
+y\_train)} on the 241-sentence training set, where the vectoriser
+and classifier are fitted jointly within the scikit-learn
+\texttt{Pipeline} object. Evaluation was performed by calling
+\texttt{pipeline.predict(X\_test)} on the 61-sentence held-out test
+set, with performance measured using macro-averaged F1, per-class
+precision and recall, and a confusion matrix.
+
+The rule-based baseline was evaluated on the same 61-sentence test
+set using the marker-counting logic described in
+Section~\ref{sec:rulebased}, enabling a direct comparison on
+identical data. The interpretability of the learned classifier was
+assessed by extracting the \texttt{LogisticRegression} coefficient
+vector and identifying the character n-gram features with the
+largest positive coefficients for each class, following the
+interpretability-oriented evaluation approach adopted by
+\citet{de2024data} in their LID model analysis.
+
+\section{Summary}
+
+\bibliographystyle{ruauthordate}
+\bibliography{methodology}  
+\end{document}

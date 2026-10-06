@@ -1,0 +1,1151 @@
+\documentclass[12pt]{ThesisRU}
+\usepackage[htt]{hyphenat}
+\usepackage[usenames,svgnames,table]{xcolor}
+\usepackage[T1]{fontenc}
+\usepackage{graphicx}
+\usepackage{url}
+\usepackage[comma,authoryear]{natbib}
+\usepackage{float}
+\renewcommand{\cite}{\citep}
+\newcommand{\shortcite}{\citeyearpar}
+
+% spacing
+\renewcommand{\baselinestretch}{1.5}
+
+% captions
+\usepackage[labelfont=bf]{caption}
+\captionsetup[table]{skip=10pt}
+\usepackage{subcaption}
+
+% tables
+\usepackage{rotating}
+\usepackage{array}
+\usepackage{longtable}
+\usepackage{ltablex, booktabs}
+\usepackage{colortbl}
+\usepackage{multirow}
+
+% maths
+\usepackage{amsmath}
+\usepackage{amssymb}
+
+% appendix
+\usepackage[toc]{appendix}
+
+% hyperlinks — load LAST among most packages
+\usepackage[hidelinks]{hyperref}
+\hypersetup{allcolors=[rgb]{0,0,0.33}, colorlinks=true}
+
+% chapter style (quotchap)
+\usepackage{quotchap}
+
+% tick/cross marks
+\usepackage{pifont}
+\newcommand{\cmark}{\ding{51}}
+\newcommand{\xmark}{\ding{55}}
+
+% confusion matrix box
+\newcommand\MyBox[2]{%
+  \fbox{\lower0.75cm
+    \vbox to 1.7cm{\vfil
+      \hbox to 1.7cm{\hfil\parbox{1.4cm}{#1\\#2}\hfil}
+      \vfil}%
+  }%
+}
+
+% code listings
+\usepackage{listings}
+\usepackage{courier}
+\definecolor{codegreen}{rgb}{0,0.6,0}
+\definecolor{codegray}{rgb}{0.5,0.5,0.5}
+\definecolor{codepurple}{rgb}{0.58,0,0.82}
+\definecolor{backcolour}{rgb}{0.95,0.98,0.995}
+\lstdefinestyle{mystyle}{
+    backgroundcolor=\color{backcolour},
+    commentstyle=\color{codegreen},
+    keywordstyle=\color{magenta},
+    numberstyle=\tiny\color{codegray},
+    stringstyle=\color{codepurple},
+    basicstyle=\ttfamily\scriptsize,
+    breakatwhitespace=false,
+    breaklines=true,
+    captionpos=b,
+    keepspaces=true,
+    numbers=left,
+    numbersep=5pt,
+    showspaces=false,
+    showstringspaces=false,
+    showtabs=false,
+    tabsize=2
+}
+\lstset{style=mystyle}
+
+% directory trees
+\usepackage{forest}
+\usepackage{dirtree}
+\newcommand\mydirtree[1]{{\footnotesize\dirtree{#1}\par}}
+
+% section numbering depth
+\setcounter{tocdepth}{3}
+\setcounter{secnumdepth}{3}
+\UseRawInputEncoding
+
+% chapter heading style (left-aligned)
+\makeatletter
+\renewcommand\chapter{%
+  \if@openright\cleardoublepage\else\clearpage\fi
+  \thispagestyle{plain}%
+  \global\@topnum\z@
+  \null\hfill\@printcites\par
+  \@afterindentfalse
+  \secdef\@chapter\@schapter
+}
+\renewcommand{\@makechapterhead}[1]{%
+  \chapterheadstartvskip%
+  {\size@chapter{\sectfont\raggedright
+    {\chapnumfont
+      \ifnum \c@secnumdepth >\m@ne
+      \if@mainmatter\thechapter
+      \fi\fi
+      \par\nobreak}%
+    {\raggedright\advance\leftmargin10em\interlinepenalty\@M #1\par}}
+  \nobreak\chapterheadendvskip}}
+\makeatother
+
+\makeatletter
+\renewcommand*{\sectfont}{\bfseries}
+\renewcommand*{\chapnumfont}{%
+  \usefont{T1}{\@defaultcnfont}{b}{n}\fontsize{70}{30}\selectfont
+  \color{chaptergrey}%
+}
+\makeatother
+
+\begin{document}
+\pagenumbering{roman}
+
+\title{Designing and Evaluating an NLP Pipeline\\
+       for Sesotho Corpus Construction}
+\author{Karabo Ntsie}
+\date{September 2025}
+\maketitle
+
+\newpage
+\tableofcontents
+\newpage
+\listoffigures
+\newpage
+\listoftables
+\newpage
+
+\pagenumbering{arabic}
+
+\chapter{Introduction}
+\section{Introduction}
+\label{sec:intro}
+
+\iffalse 
+Comment section: 
+advancements** 
+\fi
+Large-scale corpora have driven modern advances in Natural Language Processing (NLP),
+yet many languages remain underrepresented within the datasets. \citet{Mishra2020} state that a significant constraint in the development of end-to-end deep learning models for African languages is the limited availability of large-scale, clean corpora because these models feed on ever-growing data that is abundant online. This constraint is a significant issue for low-resource languages due to the lack of high-quality corpora to learn from.
+
+The issue lies with the paradigm of prioritising quantity as an immediate goal, resulting in datasets that are often noisy, inconsistent and poorly representative of the languages they capture. The issue is a lack of quality data, which is compounded by the fact that existing corpus creation techniques are slow and require manual input, thus revealing a gap for automation in data collection and curation tailored for underrepresented African languages. Existing approaches focus on addressing data scarcity after collection, through techniques such as data augmentation or transfer learning. Consequently, they work with data regardless of its quality, but for languages such as Sesotho, which faces additional complexities such as orthographic variations between South African and Lesotho conventions and limited digital presence, the need for a quality-first, automated approach to corpus building is pertinent.
+
+This project proposes the design and evaluation of an automated AI-driven pipeline for data collection and curation of digital text in Sesotho to reduce manual effort and improve the quality of corpus development.
+
+
+\section{Preliminary Literature Review}
+\label{sec:review}
+
+Natural language processing (NLP) is an evolving field of machine learning that typically requires large datasets to improve performance. However, for low-resource languages with smaller datasets, it is an issue that excludes billions of speakers from the NLP digital space. Low-resource languages can be an umbrella term depending on the conditions. Low-resource languages could focus on threatened languages, widely spoken languages that are seldom addressed in NLP research, or on high-resource languages in specialised domains \citep{Hedderich2021}. \citet{Shahid2025} defines low-resource languages as those that historically lack the quality datasets necessary to train AI models and highlights the paradoxical nature of defining low-resource languages as a lack of datasets, despite having millions of speakers. Thus, for this literature review, the broader definition of low-resource language will be used. In machine learning, it is recognised that a learning algorithm's performance depends on the provided parameters and training data; therefore, there is a need for complete datasets that encompass a broad spectrum of expression, nuances, and dialects to understand and perform tasks effectively. Thus, it is necessary to create new datasets and enhance the quality of existing datasets. 
+
+A survey of recent approaches to NLP in low-resource scenarios states that the significant solutions to insufficient corpora are generating additional data or reducing reliance on high-quality, human-annotated datasets of significant volume (i.e., large-scale gold-standard supervision) to train, evaluate, and fine-tune supervised machine learning tools \citep{Hedderich2021}. These solutions include data augmentation which creates new training instances from small, existing corpora by modifying its features while preserving the original labels, distant supervision which automatically generates labeled data by pairing unlabeled text with external knowledge sources like dictionaries or rule of thumb or trial-and-error approaches to solving language processing problems quickly,i.e. heuristics and lastly cross-lingual projections which project labels from high-resource language corpus into low resource language using parallel text. These techniques focus on model adaptation and data augmentation, while data collection and curation receive less attention, particularly in African languages.
+
+\vspace{1em}
+Despite the push for NLP advancements in underrepresented languages, most of the languages studied have been non-African and when African languages are studied, it is typically not southern African languages that are studied \citep{joshi-etal-2020-state}. A survey of sub-word language models for southern Bantu languages notes that the number of publications for agglutinative and morphologically rich languages is unbalanced, with languages such as Turkish, Arabic, and Finnish having more publications than languages such as isiZulu, kiSwahili, and other Bantu languages \citep{Kambarami2021}. Although the survey focused on a subset of NLP, it could be indicative of a larger trend within the space. 
+
+Yet a comprehensive recent survey of African NLP research reveals a more complex picture. \citet{alabi-etal-2025-charting} analyzed 884 papers published between 2019 and 2024 and found that South African languages including Sesotho appear among the top 20 most researched African languages—alongside Tswana, Tsonga, and Northern Sotho—demonstrating significant scholarly attention relative to other African languages. This suggests that the neglect identified by \citet{Kambarami2021} and \citep{joshi-etal-2020-state} is not uniform; South African languages benefit from institutional infrastructure (SADiLaR, university programs) that generates research activity. However, \citet{alabi-etal-2025-charting} also note that 126 of 401 dataset-creating papers relied on translated texts, which "lack cultural contexts" and "amplify bias towards Western concepts." This finding reframes the problem: for Sesotho, the challenge is not merely absence of research but rather the presence of research that has not yet solved fundamental quality issues—particularly the lack of authentic, culturally grounded corpora.
+
+This gap between research quantity and resource quality is evident in the early constraints of the data pipeline for Sesotho. \citet{Sibeko2024} discusses the challenges faced in corpus studies for a Sesotho text readability project, noting that when text data is available, it shows inconsistencies and variability in quality, style, and linguistic features. Crucially, web-crawled Sesotho content consists largely of Wikipedia translations that exhibit inconsistent orthographies, with both South African Sesotho (SAS) and Lesothan Sesotho (LS) conventions appearing within the same text \citep{Sibeko2024}. A proposed solution to this problem could be semi-automated or AI-assisted corpus-building methods that address both language identification and orthographic variation at the point of collection.
+
+\vspace{1em}
+An article on data collection methods and corpus curation for Swahili addressed the lack of high-quality data by identifying 12 domain-specific categories and collecting documents from authoritative Tanzanian public websites and reports. It used Python libraries such as PyPDF2 and python-docx to aggregate content from PDF and docx formats, and then cleaned the text using regular expressions to remove noise from the data \citep{Masua2024}. Quality control was implemented through manual reviews and a feedback loop with linguists to ensure linguistic requirements were met. This article employs a combination of automation and manual intervention. Automation was used to aggregate PDF and docx documents and to extract text using libraries, but identifying suitable categories and exploring authoritative literature were manual, as was quality assurance. Hence, the balance between automation and human interaction was small. While this is an improvement over traditional data collection methods, it still requires human interaction, which can be labour-intensive for significant corpora creation, so a more automated approach can be more efficient.
+
+The linguistic domain could take inspiration from other fields that have explored automation strategies for large-scale data collection. \citet{Zhou2024} sought to develop and validate an intelligent, automated data-collection tool for real-world cohort studies of chronic hepatitis B. This tool was significant because manual data collection was labour-intensive, error-prone, unstructured, and unscalable. They used an OCR model (PaddleOCR) for accurate recognition of printed, handwritten, and scene text, achieving human-level accuracy while being 17.8x faster. This study's methodology could be adapted for African languages by acquiring documents through web crawling, applying OCR preprocessing to align and remove noise, performing OCR inference using a language-specific model, conducting layout analysis and entity extraction, and producing structured output with a human verification interface; resulting in an automated corpus with accuracy approaching human levels but at significantly greater speed. Ultimately, there is less literature on data collection automation, making the need for it more relevant. This gap supports the need for automated solutions that balance efficiency with quality. 
+
+\vspace{1em}
+Data quality determines how well a model performs its tasks, and high-quality data helps avoid false correlations, thus it is important. An article discussing the problem of unintended biases, or spurious correlations, in NLP datasets states that they cause models to perform well on benchmarks but fail to generalise to real-world or out-of-distribution data \citep{Mishra2020}. \citet{Mishra2020} state that dataset quality was measured by examining human performance and model accuracy; models achieving high accuracy were interpreted as indicating good data. In reality, the article cites numerous studies showing the models were exploiting annotation artefacts, the unconscious writing habits of the crowd workers; therefore, higher benchmark scores signal low data quality. The dominant paradigm was to create first and clean later, where large amounts of biased data were generated by crowd workers, and algorithms filtered out bad samples, consequently the resources used to create the biased data were wasted. 
+
+
+These broader concerns are prevalent in the context of African language corpora. \citet{Adebara2022} provides a health check of existing corpora for African languages, stating that they are bleak. \citet{Adebara2022} provides concrete examples, such as the massive Flores-101 dataset, which contains 12.4\% incorrect tone marks, and FastText embeddings estimate that 135K out of 150K words in the Yoruba corpus are from languages such as English, French, and Arabic.
+
+The findings demonstrate corpora deficiencies include scarcity and structural inaccuracies at the lexical/orthographic level. When models train on inaccurate corpora, they produce incorrect representations and degraded performance, leading to unreliable outputs. Consequently, increasing the dataset size without quality assurance can result in wasted resources and poorer performance. 
+\vspace{2em}
+
+As discussed earlier in the literature review, \citet{Sibeko2024} noted that web-crawling methods used inconsistent orthographies for South African Sesotho (SAS) and Lesothoan Sesotho (LS), which affect corpus quality. Variations in orthographies affect NLP model performance, as evidenced by a study of Nigerian Pidgin. \citet{lin-etal-2024-modeling} demonstrated how orthographic variations from the lack of a standardised writing system directly impact corpus quality that hinders downstream NLP tasks such as machine translation and sentiment analysis. The results of the paper prove that more variants ensure better model performance, because in sentiment analysis, models trained on data with varying orthographies there was an increase in F1 score with BERT having an increase  $\pm$ 0.51 and RoBERTa having an increase of $\pm$ 2.16, BLEU improving up to $+$ 0.56, Cross-Entropy becoming lower with orthographic augmentations, and 561 variants yielding a BLEU score improvement of  0.10 and 745 variants yielding a BLEU score improvement of 0.56 \citep{lin-etal-2024-modeling}. Therefore, models become better at classifying sentences, translation quality improves, and model confidence and accuracy increase, leading to more variants and better model performance. Thus, the inclusion of orthographic variation for Sesotho could mark the difference between a high-quality corpus and a low-quality corpus. 
+
+Unlike Nigerian Pidgin, which lacks any standardised orthography, \citet{Makutoane2022} states that Sesotho has two competing orthographies that are complementary and independent, one used in South Africa and the other used in Lesotho, which systematically creates variations in Sesotho orthography that need to be addressed. SAS and LS have differing consonant representation and semi-vowel treatment, while SAS omits diacritic marks in its writing, while LS preserves them. These variations effectively enable source origin detection, preserve original spellings, document diacritic usage patterns, and apply source-appropriate tokenisation based on orthographic conventions. Although orthographic variation is a practical barrier to model performance, it can be meaningfully applied only after the language of the collected text has been correctly identified. 
+\vspace{1em}
+
+
+Beyond orthographic variation, a fundamental challenge in building a Sesotho text corpus is correctly identifying which texts are Sesotho. \citet{kargaran2023glotlid} demonstrated that language identification (LID) for low-resource languages is complicated by the high volume of high-resource languages in web data. This study revealed that the false positive rate (FPR) is more important than F1 scores for corpus creation, because errors are asymmetric: a false negative means missing a sentence in Sesotho, but a false positive means adding non-Sesotho text to the corpus that can never be removed. When processing web data for high-resource languages, even small FPR rates could flood the corpora of low-resource languages; consequently, the Sesotho corpus would be flooded with non-Sesotho text. This problem is exacerbated by out-of-model cousin errors, where text not covered by a language identification (LID) model is misclassified as its closest relative covered by that model. As a solution, \citet{kargaran2023glotlid} developed GlotLID to address these issues by covering 1665 languages, including Sesotho and its major cousins, achieving a near-perfect F1 score of 1 and an FPR of 0.00022 on the UDHP benchmark. For this work, integrating GlotLID into the corpus pipeline ensures that Sesotho text can be reliably distinguished, providing a solid base for the pipeline.
+
+
+\vspace{1em}
+Given prior findings on dataset bias and corpus health deficiencies \citep{Mishra2020,Adebara2022}, systematic evaluation becomes necessary to verify corpus quality. For the Sesotho corpus construction, quality will be measured by language purity, orthographic consistency, and downstream NLP task performance to indicate the corpus's suitability for practical applications.
+\vspace{1em}
+
+First, language purity (how much of the corpus is actual Sesotho) must exceed 90\% in the manual audit. Following \citet{kreutzer-etal-2022-quality}, a random sample of 100 sentences from pipeline output will be annotated using their binary taxonomy (correct vs error). Achieving 90\% correct sentences would position the Sesotho corpus above the median for low-resource languages in their study, where 42\% of corpora fell below 50\% purity. Second, orthographic awareness will be measured by the pipeline's ability to correctly classify South African versus Lesotho variants on a held-out test set of 200 manually labelled sentences, with a target F1-score $\geq$ 0.85. This threshold acknowledges \citet{Makutoane2022} documentation of systematic orthographic differences while allowing for ambiguous edge cases. Third, downstream utility will be demonstrated through improved performance on a text classification task: a model trained on pipeline-curated data must achieve a statistically significantly higher F1-score ($p < 0.05$) than the same model trained on an equivalent volume of unfiltered web data, using 5-fold cross-validation. This extrinsic measure, aligned with the readability work of \citep{Sibeko2024}, provides the ultimate validation that quality improvements translate into practical benefit. This is what this project will define by quality.
+
+
+\section{Problem Statement}
+NLP development for underrepresented African languages faces the issue of prioritising data quantity over data quality resulting in noisy, inconsistent datasets. Existing corpora methods are labour-intensive and do not address the earlier bottleneck of quality corpus creation instead focus on the later issue of data scarcity using data augmentation thus revealing a gap in the need for AI-driven techniques for efficient corpus development in languages such as Sesotho.
+
+\section{Hypothesis}
+An automated pipeline incorporating language identification and orthographic variation detection will produce a high-quality Sesotho corpus which will improve performance on downstream NLP tasks better than unflitered raw data.
+\vspace{1em}
+\section{Research objectives}
+\begin{itemize}
+        \item  To analyse limitations in existing Sesotho corpora and web-based data sources.
+       \item 	To develop an automated pipeline that produces high-quality Sesotho text.
+       \item To develop mechanisms to reduce cross-lingual contamination and managing orthographic variation within collected Sesotho text.
+       \item To evaluate the effectiveness of the proposed pipeline in improving corpus consistency and suitable for downstream NLP tasks. 
+       \item To establish and validate measurable quality thresholds for Sesotho corpus development, including language purity ($\geq$ 90\%), orthographic classification accuracy (F1 $\geq$ 0.85), and downstream task improvement ($p < 0.05$), thereby providing replicable success criteria for future low-resource language pipeline projects.
+\end{itemize}
+\vspace{1em}
+\section{Approach}
+The project will follow a modular development approach, with each pipeline component built and tested independently before integration. The pipeline will operate in five sequential phases. Phase 1: Data Collection will prioritise government websites, online newspapers, and scanned books over social media to align with the quality-first goal, with OCR carefully tuned to handle Sesotho-specific characters accurately. Phase 2: Language Identification will process all collected text using GlotLID \citep{kargaran2023glotlid} to verify it is Sesotho, addressing the critical problem of cross-lingual contamination. Phase 3: Orthographic Classification will label text as either South African (SAS) or Lesotho (LS) convention using one of several approaches—a rule-based baseline using anchor graphemes (e.g., SAS 'kg' vs. LS 'kh'), a character-level n-gram model trained to distinguish statistical spelling patterns, or a dictionary-lookup hybrid using specialised lexicons—with the final choice documented based on empirical performance. Phase 4: Metadata Enrichment and Structuring will wrap cleaned text in metadata tags to produce a machine-ready corpus in JSONL format, with each entry including the cleaned text, language ID, orthography tag, purity score, source information, and token count. Phase 5: Quality Assurance and Validation will manually audit random samples to verify language purity and orthographic classification accuracy as a one-time evaluation of pipeline performance.
+
+The pipeline's effectiveness will be assessed through both intrinsic and extrinsic measures. Intrinsic evaluation will measure language purity against manual audit of 100 sentences following \citet{kreutzer-etal-2022-quality}'s taxonomy, orthographic classification accuracy on 200 manually labelled sentences, and OCR Word Error Rate on gold-standard pages. Extrinsic evaluation will conduct a controlled experiment comparing identical models trained on two 10,000-sentence datasets: raw unprocessed web data versus pipeline-curated data. If curation improves quality, the model trained on curated data should exhibit lower perplexity (indicating it learned cleaner patterns), better semantic word representations, and statistically significant improvement ($p < 0.05$) on a text classification task using 5-fold cross-validation, following \citet{Sibeko2024}'s readability work. Success requires language purity exceeding 90\%, orthographic classification F1-score $\geq$ 0.85, and significant downstream task improvement—thresholds grounded in \citet{kreutzer-etal-2022-quality} and \citet{Makutoane2022}.
+\vspace{1em}
+\section{Limitations}
+\begin{itemize}
+    \item The pipeline may not achieve the scale of high-resource language corpora due to limited Sesotho digital presence.
+    \item The text available online may overrepresent certain domains, such as religious texts or government documents, while underrepresenting others.
+    \item The orthographic classifier may misclassify ambiguous text with mixed orthographies. 
+    \item  Code-switching detection may be incorrectly handled.
+\end{itemize}
+
+\vspace{10em}
+
+\chapter{Literature Review}
+\section{Background Concepts}
+This section provides an understanding of the basic concepts necessary to engage with the literature reviewed in the sections that follow. The concepts introduced here span three areas: the foundations of NLP and the role of data within it, the technical components that underpin modern corpus construction pipelines, and the linguistic properties relevant to understanding why languages like Sesotho present particular challenges for these systems.
+
+\subsection{Core Natural Language Processing concepts}
+Natural Language Processing (NLP) is a branch of computer science that is concerned with the interactions between humans and computers that enable computers to understand, interpret and generate human language \citep{reshamwala2013review}. Data are central to NLP because NLP systems require vast examples from which to learn language patterns. The data used in NLP is a corpus (or corpora in plural), and a corpus is a collection of pieces of language, consisting of text, selected to represent a language \citep{yakut2022basics}. 
+
+\subsection{The resource spectrum}
+Languages are broadly categorised in NLP as high-resource or low-resource depending on the availability of digital text, annotated datasets, trained models, and evaluation benchmarks \citep{shahid2025think}. English is the archetypal high-resource language, with hundreds of datasets and billions of words of digitised text. Low-resource languages, by contrast, lack the data infrastructure necessary to train or evaluate NLP systems effectively. Crucially, this is not simply a function of how many people speak a language — many low-resource languages have millions of speakers — but of how much of that language exists in digital, processable form and how many researchers work on it.
+
+\subsection{Linguistic concepts}
+Agglutinative languages are those in which words are formed by joining multiple morphemes — meaningful units — each contributing a distinct element of meaning. Bantu languages, a large family spoken across sub-Saharan Africa, are characteristically agglutinative. In these languages, a single verb root can generate thousands of valid surface forms through combinations of prefixes and suffixes encoding tense, subject, object, negation, and more. This morphological richness poses direct challenges for NLP systems designed around the assumption that vocabulary is finite and stable \citep{kambarami2021computational}.
+
+Orthography refers to the writing system of a language — its spelling conventions, character set, and punctuation rules — as distinct from the language itself. Two varieties of the same language can be written in different orthographies, producing text that looks superficially similar but differs systematically at the character level. For automated systems, orthographic variation introduces inconsistency that can undermine corpus quality and model performance if not explicitly handled \citep{makutoane2022people}.
+
+Tokenisation is the process of breaking text into units that a model can process, typically words or subword fragments. For languages like English, where words are clearly delimited by spaces and vocabulary is relatively stable, tokenisation is straightforward. For morphologically complex languages, where a single word can carry the meaning of an entire English phrase through layers of prefixes and suffixes, tokenisation becomes a critical design decision that directly affects model performance \citep{kambarami2021computational}.
+\subsection{Technical concepts}
+Transfer learning refers to the practice of training a model on one language or task and then applying or adapting it to another. Cross-lingual transfer specifically involves transferring knowledge from a high-resource language to a low-resource one, exploiting structural similarities between languages to compensate for data scarcity. While transfer learning has produced meaningful gains in some settings, its effectiveness depends on the availability of auxiliary resources and the linguistic similarity between source and target languages \citep{hedderich2021survey}.
+
+Language identification (LID) is the task of automatically determining which language a piece of text is written in. In corpus construction, LID is a critical upstream component: before any processing can occur, the system must verify that collected text actually belongs to the target language. For low-resource languages, this is particularly challenging because they are vastly outnumbered by high-resource languages in web data, meaning even small error rates can flood a target language corpus with foreign text \citep{article}.
+
+Web crawling is the automated process of collecting text from the internet by following hyperlinks across web pages. Large web crawls such as Common Crawl archive enormous volumes of multilingual text and serve as the primary data source for many NLP corpora. However, web-crawled data is inherently noisy, containing duplicates, formatting artefacts, and text from unintended languages, and its quality varies significantly across languages \citep{dodge2021documenting}.
+
+Corpus quality refers to the fitness of a text collection for its intended use. A high-quality corpus is one that accurately represents the target language, is free from contamination by other languages or noise, and is sufficiently diverse in domain and register to support generalisation. In low-resource settings, quality is particularly consequential because there is little data to absorb the effects of noise — errors in a small corpus propagate directly into model behaviour in ways that errors in a large corpus might not \citep{hurtado2022documents}.
+
+A data pipeline is a sequence of automated processing steps that transforms raw input — in this case, web-crawled text — into a structured, usable output. In NLP corpus construction, a pipeline typically includes stages for data collection, language identification, filtering, cleaning, and formatting. The design decisions made at each stage compound: errors introduced early propagate through all subsequent steps, making principled pipeline architecture essential to producing reliable data \citep{suchomel2020better}.
+
+\clearpage
+\section{The African NLP landscape}
+This section discusses the African NLP landscape and the marginalisation of African languages in NLP research. This section does this by examining the measurable scale of underrepresentation across resource tiers, the documented quality of wen-crawled multilingual data, the limitations of transfer learning and data augmentation as responses to data scarcity, and the underperformance of large multilingual models on African languages despite their scale. Together, these subsections establish the challenge faced by African NLP. It is within this broader context that the specific challenges of Sesotho corpus construction, examined in the following section, must be understood.
+
+\subsection{The quantitative scale of under representation}
+The underrepresentation of African languages in NLP is not only observable but measurable through resource audits and corpus analysis. \citet{joshi2020state} classify the world’s languages into six tiers based on the availability of labelled and unlabelled data. Their findings show that 2,191 languages, representing 88.38\% of all languages, fall into the lowest tier with virtually no digital resources. \citet{adebara2022towards} extend this analysis to African languages and report that 542 fall into this lowest category, 26 have minimal resources, and only one language, Afrikaans, reaches a higher tier due to its web presence. No Indigenous African language appears in the top tiers, highlighting the scale of the imbalance.
+
+However, counting datasets alone does not capture the full extent of the problem. \citet{yu2022beyond} analyse 156 multilingual datasets covering 222 languages and find that 68\% of these languages have no manually annotated data. Among low-resource languages, 84.9\% of datasets rely on automatically generated labels, which are often noisy and unreliable. Only 40 languages, representing 18\% of those surveyed, include text written specifically by humans for NLP tasks. Most datasets rely on limited sources such as Wikipedia, which does not reflect the full range of language use. The study further shows that dataset availability strongly correlates with the number of NLP researchers who speak the language ($\rho$ = 0.71) and with the availability of crowdworkers ($\rho$ = 0.58–0.59), indicating that participation, rather than purely technical constraints, drives the resource gap.
+
+These disparities have direct consequences for model performance. The gap between high- and low-resource languages spans several orders of magnitude. English has over 6 million Wikipedia articles and hundreds of labelled datasets, while low-tier languages may have only a few pages and no standardised resources. \citet{hedderich2021survey} show that English supports at least eighteen NLP task categories, while languages such as Nahuatl and Quechua support fewer than eight, with entire capability levels absent.
+
+Efforts to address this gap demonstrate both progress and limitations. \citet{nekoto2020participatory} shows that community-driven work can produce meaningful results through the Masakhane project, which created 45 machine translation benchmarks across 32 African languages, including 16 classified as left behind and 11 as scraping by. For many of these languages, this was the first instance of human evaluation. However, the process required sustained coordination of over 400 participants across at least 20 countries, highlighting the difficulty of scaling such efforts and the need for more automated approaches.
+
+The architecture of modern NLP further reinforces this imbalance. Neural models require large volumes of unlabelled data, which low-resource languages lack. \citet{joshi2020state} argue that this creates a cycle in which methods designed to reduce dependence on labelled data still depend on resources that many languages do not have. \citet{yu2022beyond} show that cross-lingual datasets attempt to address this through translation, yet only 33 of the 156 datasets surveyed follow this approach, and 61.9\% of these rely on automatic translation. This introduces artefacts that do not reflect native linguistic use, reducing data quality.
+
+Data quality issues further undermine existing resources. \citet{adebara2022towards} report that among 205 multilingual datasets containing African languages, at least 15 were completely erroneous, many contained less than 50\% correct data, and 82 were mislabelled or used ambiguous language codes. In the Flores-101 dataset for Yorùbá, 12.4\% of entries contain incorrect tone marks, 5.29\% contain spelling errors, and 2.7\% show inconsistent spelling. In tone languages, such errors can change meaning and negatively affect model training. Yu et al. (2022) confirm that 53 out of 156 datasets rely on automatically induced labels and often lack validation measures, such as inter-annotator agreement.
+
+This imbalance is also reflected in research output. \citet{joshi2020state} show that high-resource languages dominate major NLP conferences, while low-resource languages receive significantly less attention. \citet{yu2022beyond} further shows that although 62 datasets were created for multilingual tasks covering 217 languages, only 16 languages have dedicated monolingual benchmarks, and these are primarily languages with established research communities. Multilingual datasets are more likely to rely on translated or automatically generated data, which is typically lower in quality.
+
+Taken together, these findings show that the challenges facing African NLP form a structural cycle. Limited high-quality data constraints model development, reducing incentives to generate new data. \citet{nekoto2020participatory} link this to broader societal factors, while \citet{yu2022beyond} describes it as a people gap, in which resource availability depends on the presence of language-proficient researchers. Addressing this issue requires scalable and systematic approaches to data collection and curation, alongside efforts to support African NLP communities.
+
+\subsection{The quality failure of web-crawled multilingual data}
+
+The prevailing assumption that web-crawled corpora, supplemented by curated reference sources such as Wikipedia, provide an adequate foundation for multilingual NLP rests on a circular dependency that the literature has only recently begun to interrogate systematically. Wikipedia is routinely used as a high-quality reference to train the language identification classifiers that partition Common Crawl along language boundaries. However, the quality of Wikipedia itself, particularly for non-English languages, is far from assured. \citet{tatariya2024good} empirically demonstrates that MinHash deduplication alone affects over 28\% of all non-English Wikipedia articles. In contrast, \citet{perelkiewicz2024review} reports that approximately 40\% of the Common Crawl archives consist of exact duplicates, with paragraph-level duplication reaching 70\% in some snapshots. The field is therefore not operating on a clean spectrum from noisy web data to curated reference material, but within an ecosystem in which quality failures are mutually reinforcing and systemically reproduced across the entire data pipeline.
+
+These failures are not evenly distributed between languages. \citet{tatariya2024good} four-tier quality taxonomy of non-English Wikipedias reveals that the languages most severely affected are disproportionately from the Global South: Yorùbá Wikipedia, for instance, loses nearly 60\% of its articles to exact-match deduplication, with many removed entries consisting of single placeholder tokens rather than substantive linguistic content. The errors introduced at this stage propagate downstream, since the compromised Wikipedia data used to train language identification classifiers then distorts the composition of the corpora that those classifiers are meant to organise. \citet{kwon2026afroscope} identify domain skew as a further compounding factor, noting that available African language data is heavily concentrated in religious texts and Bible translations, failing to capture the register diversity necessary for robust language modelling. This is reinforced by the geolocation bias documented by \citet{perelkiewicz2024review}, whereby countries with large African-language-speaking populations remain radically underrepresented in the Common Crawl relative to their demographic weight, meaning that web-crawled data attributed to these languages frequently originates from narrow and unrepresentative community segments.
+
+A further dimension of quality failure operates at the level of linguistic structure itself, largely invisible to the document-level filters dominant in the field. \citet{de2007automatic} demonstrates that the digitisation of African language corpora through OCR processing and non-standard encodings systematically strips diacritical marking, silently removing phonological and morphological information encoded in characters outside the standard Latin alphabet. Crucially, this degradation evades the heuristics most commonly applied in large-scale corpus construction — length thresholds, type-token ratios, entropy metrics — all calibrated against assumptions derived from high-resource, English-language contexts. A document stripped of its diacritics will pass every standard quality filter yet remain linguistically impoverished in ways that undermine any downstream task dependent on phonemic or morphological distinctions. This points to a fundamental mismatch between the quality frameworks the field has developed and the specific forms of degradation most prevalent in African language data, a mismatch that cannot be resolved by applying existing pipelines more aggressively or at greater scale. \citet{tatariya2024good} recommendation for per-language quality assessment, \citet{kwon2026afroscope} emphasis on domain diversity, and \citet{de2007automatic} demonstration of sub-lexical degradation collectively converge on the same diagnosis: the quality failure of web-crawled multilingual data is structurally reproduced within the architecture of the data pipeline itself, and its consequences fall with disproportionate severity on African and other low-resource languages.
+
+\subsection{The limitations of transfer learning and augmentation as solutions}
+\citet{hedderich2021survey} catalogue an extensive array of such methods, yet note that most assume auxiliary resources — parallel corpora, bilingual dictionaries, or machine translation systems — that do not exist for truly low-resource languages. This section argues that these technical fixes circumvent rather than solve the problem of data quality, revealing a gap that automated curation is positioned to fill. 
+
+Cross-lingual transfer learning, whether data- or model-based, relies on prerequisites that are rarely met in African languages. \citet{hedderich2021survey} identify three dimensions of resource availability — task-specific labels, unlabeled text, and auxiliary data — and demonstrate that most transfer techniques require at least two. For languages such as Tiv, \citet{achir2026preservation} document a "doubly low-resource scenario": no parallel corpus, no POS tagset, no MT system, and no ASR resource. Where resources exist, performance remains poor. \citet{garcia2025cross} report that zero-shot transfer on MasakhaNER 2.0 yields only 24.9\% F1 for isiXhosa and 43.9\% for isiZulu — a fraction of the 92.4\% achieved for English. \citet{thangaraj2024cross} further shows that fine-tuning multilingual models on Kirundi results in 74\% catastrophic forgetting on the original Kinyarwanda, trading off source performance for modest target gains.
+
+Data augmentation techniques — back-translation, switchout, and sentence concatenation — operate on existing data rather than generating higher-quality data. \citet{lamar2023measuring} introduces the Data Augmentation Advantage (DAA) metric, quantifying how many true pairs a synthetic pair replaces. For English-Italian at 500K training pairs, sentence concatenation achieved DAA of 1.38 (each synthetic pair worth 1.38 true pairs). However, at 1M pairs, the same method yielded -0.03, which is actively harmful. For true low-resource languages (English-Romany, 24K pairs), DAA varied unpredictably from -0.13 to 3.0 across augmentation types, demonstrating that benefits are neither consistent nor guaranteed.
+
+\citet{oduwole2025scarcity} extend this analysis to six African language pairs. While augmentation improved BLEU by up to 25\% relative to the baseline, absolute gains remained marginal. English-Hausa improved from 5.10 to 9.65 BLEU; English-Yoruba from 6.42 to 9.14 BLEU. For French-Fon, the best augmentation achieved only 3.45 BLEU (baseline 0.89) — functionally useless for real-world translation. Critically, English-Swahili — the best-resourced pair with 30,782 parallel sentences — showed no improvement, with the baseline (25.80 BLEU) outperforming all augmented variants. Augmentation cannot compensate for inadequate seed data; it may even harm when sufficient data already exists.
+
+For ASR, \citet{bartelds2023making} reports that self-training on four minority languages yields relative WER reductions of 6.3–13.9\% when starting from just 24 minutes of transcribed speech. However, diminishing returns set in rapidly: adding 672 minutes of self-trained data produced only a 20.5\% relative reduction — less than double the gain from the first 168 minutes. The quality of generated transcriptions is constrained by the teacher model, which itself is trained on limited seed data.
+
+LLM-based synthetic data generation promises scalability but introduces new failure modes. \citet{gyamfi2026synthetic}, generating 50,000 Swahili sentiment samples with LLM judging, achieved 80.95\% agreement with human ground truth. However, they identify "translationese" — grammatically correct but culturally hollow text — as a persistent problem. Generated proverbs, while linguistically accurate, were frequently incongruent with context, revealing that LLMs approximate statistical patterns without pragmatic grounding.
+
+\citet{Zhou2024} report more successful automation for medical records: their OCR-NLP pipeline achieved 98.66\% accuracy (vs 98.65\% manual) while reducing collection time from 63.6 to 3.6 minutes per patient. However, the authors caution that this success depends on highly constrained documents with "white background with black text" — conditions that do not hold for heterogeneous web data.\citet{oduwole2025scarcity} similarly observe that augmentation techniques degrade as languages become more resource-scarce: for French-Wolof, even the best augmentation (7.70 BLEU) remains far below usable quality. Augmented data inherits the biases and limitations of its source.
+
+The limitations surveyed above point to a deeper structural issue. \citet{hedderich2021survey} acknowledge that most low-resource techniques require auxiliary resources — MT systems, bilingual dictionaries, parallel corpora — that are absent for languages like Tiv. \citet{yu2022beyond} demonstrate that the availability of manually annotated datasets correlates with the number of language-proficient researchers ($\rho$ = 0.71). The scarcity is primarily human, not technical. Cross-lingual transfer and data augmentation are responses to this scarcity, but they function as palliatives. \citet{garcia2025cross} concluded that there is no universal, multilingual pretrained model for every language and domain. These limitations justify a complementary approach: scalable, quality-first data curation that addresses the source of scarcity rather than its symptoms.
+
+\subsection{The failure of large multilingual models for African languages}
+
+Despite being positioned as solutions for low-resource languages, large multilingual models such as mBERT and XLM-R underperform on African languages. \citet{hussen2025state} quantifies the gap: African languages represent 28.57\% of the world's 7000 languages, while multilingual models allocate fewer than 10\% of language slots. mBERT supports 104 languages, but only 6 are African; a proportional representation would require approximately 30. mT5 supports 101 languages, including 14 African languages, whereas it should support 29. XLM-R supports 100 languages, with 8 African languages. Across all surveyed models, 42 of over 2000 African languages receive support. Amharic, Swahili, Afrikaans and Malagasy dominate the coverage, while 98\% of African languages have no model support.
+
+\citet{chang2024multilinguality} explains the curse of multilinguality, where adding more languages to a fixed-capacity multilingual model systematically degrades performance per language. For high-resource languages, adding 1 billion multilingual tokens is equivalent to removing 63-88\% of the target language's monolingual data. For low-resource languages, the benefits from multilingual data plateau quickly, leading to too much data and eventually hurting performance as models reach their limits. Performance gains depend on the syntactic similarity of added languages. This curse explain the under representation documented by \citet{hussen2025state} where 42 of over 2000 African languages face additional barrier that \citet{chang2024multilinguality}'s analysis identifies as critical to performance: 3 of 23 active scripts are supported =, making most African languages unseen scripts that partially script-agnostic models cannot handle; tokenisaton is biased toward Latin-script languages; and digitised corpus availability is severely limited. Where \citet{chang2024multilinguality} shows that monolingual tokenisers achieve 93.7\% vocabulary coverage with minimal data, \citet{hussen2025state} shows that multilingual tokenisers fail on African scripts entirely, thus producing worse outcomes for African languages than for low-resource languages with compatible scripts and digitised corpora.
+
+\citet{ogueji2022afriberta} directly tests the generic multilingual approach against a targeted alternative. AfriBERTa, trained on 0.94GB of curated African language data with 108 million tokens, matches or exceeds XLM-R and mBERT on Hausa, Amharic and Swahili despite being 3 times smaller and trained on 100 times less data. It performs well on languages it was never pretrained on (Luo, Wolof, and Luganda). In text classification, AfriBERTa outperforms XLM-R and mBERT by over 10 F1 points on Yoruba and 7 points on Hausa, thus concluding that pretraining on similar low-resource languages may be better than mixing high- and low-resource languages, which contradicts the assumption underlying generic multilingual models.
+
+\citet{rahman2026pashtocorp} replicates this finding for Pashto. XLM-R bases achieve only 19\% F1 on WikiANN Pashto NER. Continued pretraining on PashtoCorp, a targeted 1.25-billion-word corpus, improves F1 by 10\% relative to 21\% and reduces training variance nearly 7 times from $\pm 4.7\%$ to $\pm 0.7\%$. The gain is largest at 50 training sentences ($\pm 27\%$), demonstrating that targeted data most benefits the lowest-resource scenarios.
+
+\citet{brown2025pula} shows the ceiling of targeted approaches. Pula, a bilingual Sestswana-English model trained on curated data, outperforms GPT-4o and Gemini 1.5 Pro on English-Setswana translation tasks and exceeds Llama 3.1 70B on all Setswana reasoning benchmarks despite having far fewer parameters.
+
+Generic multilingual models fail African languages because of their design assumptions with maximising language count, using web-crawled noisy data, and script-agnostic tokenisation, which conflict with the characteristics of African languages. African-centric models trained on curated, script-appropriate data with linguistically similar language combinations consistently outperform larger generic models. The problem is an incorrect design, not insufficient scale.
+
+\clearpage
+\section{The Sesotho context}
+This section discusses the Sesotho language and its standing in the natural language processing landscape. Understanding this standing requires first situating Sesotho within its linguistic, demographic, and sociopolitical context, and then examining how these factors intersect with the resource requirements of contemporary NLP.
+
+The structure of this section proceeds from Sesotho's linguistic profile to the orthographic split, and ends with Sesotho's digital presence and the critical gaps in current corpora.
+
+\subsection{The linguistic profile of Sesotho}
+Sesotho is a Bantu language of the Sotho-Tswana group, spoken predominantly in Lesotho and South Africa, with over 13 million speakers, of whom 5.6 million are first-language speakers and 7.9 million have Sesotho as a second language \citep{mokoaleli2020sesotho}. The scale of speakers establishes Sesotho as a linguistically significant community that deserves computational support. Its continued marginalisation in human language technologies is therefore a misalignment between its linguistic structure and the underlying assumptions of current NLP methods.
+
+This misalignment is rooted in its typological profile. Within the broader framework of morphological typology, Sesotho belongs to the agglutinative branch of the synthetic languages, a classification it shares with the Bantu group, and it stands in direct contrast to analytic or isolating languages such as English \citep{kambarami2021out,masethe2022word}. In agglutinative languages, words are constructed with morphemes, each carrying a single segmentable meaning \citep{kambarami2021out}. However, in Sesotho, this morphological organisation challenges token-based and vocabulary-driven computational methods, as meaning is not distributed across independent units but is encoded through tightly interdependent morphological structures that cannot be easily segmented. 
+
+The noun class system exemplifies these challenges. Each noun class is distinguished by unique prefixes which govern concordial agreement across the entire sentence, determining the form of subject markers, qualificative particles and associative markers on all co-occuring constituents \citep{mokoaleli2020sesotho}. This creates dense, non-local dependencies that are poorly captured by models assuming token independence. The situation is further complicated by prefix drop, which introduces variability in surface forms and obscures underlying grammatical structure, undermining approaches that rely on stable orthographic cues.
+
+Sesotho's morphology is generative because of a productive derivational process, alongside emerging patterns such as the extension of the prefix /bo-/ across multiple lexical categories, which demonstrate that the language continually produces novel, well-formed expressions \citep{mokoaleli2020sesotho,moloi2014morphology}. This open-ended productivity renders finite lexicons incomplete and exposes the limitation of closed-vocabulary NLP systems: their inability to generalise beyond observed forms.
+
+Comparative evidence from related Sotho-Tswana languages reinforces that these challenges are systemic. Languages such as Sesotho sa Leboa (Sepedi) exhibit similar patterns of layered affixation and context-dependent polysemy, reflecting a shared agglutinative structure that generates dense and flexible form-mappings \citep{masethe2022word}. The computational consequences of agglutinative morphology lead to persistent out-of-vocabulary (OVO) failures, as productive affixation generates valid but unseen forms \citep{kambarami2021out}. While Sesotho's disjunctive orthography distributes morphological information across tokens, in contrast to conjunctive systems such as Shona, the underlying issue remains: models that treat words as stable, enumerable units fail to capture the combinatorial nature of morphology.
+
+These observations highlight the limitations of prevailing NLP paradigms for Sesotho. Its morphological richness introduces an added complexity and directly contradicts the assumptions underpinning tokenisation, vocabulary design, and generalisation. Therefore, effective computational approaches must operate at the sub-word level and model morphological processes, or Sesotho's linguistic richness will manifest as a systemic failure in existing NLP systems.
+
+\subsection{The orthographic split}
+Sesotho's linguistic richness does not end at its morphological richness but extends to its challenge of having two competing orthographies. French missionaries developed the Lesotho orthography in the 19th century, while the South African orthography was formalised in 1959 \citep{makutoane2022people}. Harmonisation attempts began as early as 1927 and failed repeatedly because Lesotho authorities objected to the proposed changes \citep{matlosa2017sesotho}. The orthographic split was sustained by the geographical distribution of the Basotho nation spanning two countries; therefore, Sesotho text is being produced simultaneously by two populations under two different orthographies. Therefore, web scrapers pulling data for Sesotho text inevitably pull documents from both sides because South African Sesotho (SAS) and Lesothoan Sesotho (LS) superficially look similar, leading naive language identification to treat them as one variety. Thus, the competing orthographies will remain a permanent feature of the Sesotho digital landscape and must be accommodated. 
+
+The SAS/LS split operates at two levels of the writing system simultaneously, each with distinct implications for automated processing. At the graphemic level, the divergence is systematic and rule-governed: SAS substitutes kg, tjh, tsh and d where LS writes kh, ch, tš and l respectively, omits the apostrophes LS uses to mark contracted sounds, drops the vowel diacritics LS preserves, and renders semi-vowels as ya and wa where LS writes ea and oa \citep{makutoane2022people}. The consistency of these substitutions is computationally significant because the pattern is rule-governed rather than arbitrary, and the variants are distinguishable at the character level, providing reliable anchor features for an orthographic classifier without requiring semantic analysis. \citet{motaung2025sesoda} confirm this characterisation independently in a computational dataset construction context, documenting the same consonant cluster divergence as a systematic feature requiring explicit handling rather than normalisation. Their morphological profile of Sesotho, with an out-of-vocabulary rate of 73\%, 18 noun classes, and an agglutinative index of 4.7, is substantially higher than Swahili (41\% OOV) and Zulu (58\% OOV), establishing that these graphemic differences interact with an exceptionally productive morphological system, meaning a misclassified orthographic variant does not produce a localised error but propagates inconsistency across morpheme boundaries throughout the document. The diacritic omission in SAS deepens this problem at the phonological level. \citet{matlosa2017sesotho} identifies the consequence as systematic underspecification: in SAS, the single grapheme "e" encodes three distinct phonological values and "o" encodes three others. For any downstream NLP task depending on lexical disambiguation or morphological analysis, two documents, one from each orthographic tradition, may therefore be statistically incomparable even when describing the same content, because the character distributions a model learns from are structurally different. A pipeline that conflates the two variants does not merely introduce noise; it produces a corpus whose internal statistical properties are incoherent.
+
+\citet{lin-etal-2024-modeling} demonstrated that modes trained on orthographically diverse data with explicit variant labelling outperform those trained on normalised data in Nigerian Pidgin, a language without a unified writing convention. Therefore, the orthographic split is structured linguistic information that can be leveraged to improve downstream NLP performance.
+
+\subsection{Sesotho's digital presence and corpus gaps}
+The development of NLP tools for Sesotho is fundamentally constrained by the scarcity of high-quality supervised data for advanced computational tasks \citep{sibeko2022overview}. While Sesotho has over 13 million speakers across South Africa, Lesotho and Zimbabwe, it remains classified as a low-resource language \citep{mokhosi2024sesotho}. This classification reflects the language's digital representation. The literature reveals the abundance of certain categories of text due to specific institutional or religious initiatives. However, the practical utility is frequently undermined by orthographic inconsistency and a dearth of linguistically diverse, original material.
+
+Of the literature surveyed, the digitally available Sesotho can be categorised into three distinct streams of translated government documents, religious/parallel texts, and emerging social datasets.
+
+The most substantial and professionally curated source of monolingual data derives from South African government initiatives. The Autshumato Machine Translation project and the National Centre for Human Language Technology (NCHLT) text collection constitute the backbone of available raw text. \citet{Sibeko2024} reports utilising approximately 4.6 million from the Authshumato Sesotho dataset and a further million tokens from the NCHLT collection. These corpora are particularly valuable because they consist of texts professionally translated from English, thereby ensuring a relatively high standard of linguistic accuracy and adherence to standardised government terminology. \citet{marivate2020investigating} similarly leveraged these resources to build vectorisers for Sotho-Tswana languages, noting their utility in overcoming the "small data" problem inherent to low-resource languages (LRLs).
+
+The second stream, being religious text specifically from the 1960 Sesotho Bible and Jehovah's Witness publications (JW300 corpus), represents a significant source of parallel and monolingual data. \citet{agic2019jw300} introduced JW300, a massive parallel corpus covering 300 languages, which includes substantial Sesotho alignments. Although there may be an ideological bias, acknowledged by \citet{agic2019jw300}, the corpus provided a rare source of sentence-aligned, cross-lingual information. \citet{Sibeko2024} utilised nearly one million tokens from the Sesotho Bible, arguing that biblical text remains a culturally embedded and orthographically stable resource.
+
+The third stream is from emerging social media and online news. \citet{marivate2020investigating} harvested news headlines from the SABC Facebook page (Motsweding FM) in Setswana and Sepedi, establishing a methodology applicable to Sesotho. More concretely, \citet{mokhosi2024sesotho} manually scraped and curated the Sesotho News (SN) dataset from two online newspapers using Lesotho orthography, yielding 2401 headlines annotated for sentiment analysis. In the largest aggregation to date, \citet{ronny2025advancing} expanded the SAfriSenti corpus, which includes Sesotho as a part of a multilingual Twitter dataset, thus marking a critical shift toward capturing colloquialisms and code-switching.
+
+Despite the availability of these three streams of data, the literature consistently identifies orthographic inconsistency as the primary quality barrier to aggregating them into larger, more powerful corpora. Systematic differences between the South African Sesotho (SAS) and Lesotho Sesotho (LS) orthographies affect fundamental text properties. Texts written to the two standards cannot be combined straightforwardly without extensive normalisation, a labour-intensive process that requires manual verification. Consequently, resources developed for one orthographic standard effectively exclude the linguistic community that uses the other orthographic standard. As noted by \citet{mokhosi2024sesotho}, Lesotho's orthography of Sesotho is largely sidelined from mainstream NLP research, limiting the availability of language-specific services for 1.85 million speakers. This orthographic fragmentation, combined with the domain-specific nature of each data stream, means that Sesotho NLP researchers often face a difficult choice: they must either work within the constraints of a single orthographic standard and domain, sacrificing broader representativeness, or invest prohibitive resources in manual normalisation to create a more comprehensive but smaller curated dataset. 
+\clearpage
+\section{Data collection and data quality}
+The preceding sections established that African languages face a structural data crisis rooted not only in scarcity but in the poor quality of what exists, and that Sesotho presents a specific combination of orthographic and morphological challenges that generic solutions cannot address. This section examines the technical literature that informs how those challenges can be addressed in practice. It proceeds in three parts. First, it establishes what data quality means in the context of a low-resource corpus and how it can be operationalised into measurable criteria. Second, it surveys existing automated pipeline approaches and identifies where they succeed and where they fail for languages like Sesotho. Third, it examines language identification as a discrete pipeline component, with particular attention to the asymmetry between false positives and false negatives that makes LID design decisions consequential for corpus integrity. Together, these subsections provide the technical grounding for the pipeline design proposed in this project and establish that the gap to be filled lies not in any single component but in their principled integration.
+\subsection{Defining and measuring data quality in NLP}
+The quality of a text corpus is a measure of its fitness for use given the specific research context. For a low-resource language such as Sesotho , where digitised text is scarce and web-sourced data contains unknown noise, establishing a rigorous definition of quality is a prerequisite to downstream NLP tasks. \citet{hurtado2022documents} propose a total corpus quality framework that systematically decomposes error sources into three sources: source errors (inherent in original material, such as damaged documents or low-quality scans), and research inference errors (stemming from sampling, coverage, or specification decisions). For the Sesotho pipeline, source errors arise during OCR processing and sentence extraction, and research inference errors relate to sampling strategy for human evaluation and specification of what constitutes as Sesotho.
+
+\citet{wang2026modernizing} extends this analysis by identifying four recurring challenges specific to unstructured data which are format heterogeneity (data arriving in PDFs,HTML and scanned images), semantic ambiguity (the same word having different meanings in different contexts), syntactic variability (spelling variations, code-switching, and informal register), scale (the impossibility of manual inspection for large volumes). Each of these challenges are relevant to the Sesotho language as format heterogeneity arises fro different formats from diverse web sources, syntactic variability due to the coexistence of South African and Lesotho orthographic standards, and scale demands  automated quality assessment. \citet{xiao2023evaluating}  introduce METRICEVAL, a framework that formalises two concepts for evaluating metrics which are reliability (consistent results across repeated measurements) and validity (measuring what is intended). Although METRICEVAL was designed to evaluate NLG (natural language generation) metrics rather than raw corpora, its distinction between reliability and validity provides a useful insight that a corpus has high reliability if repeated sampling yeilds consistent quality estimates, and high construct validity if quality criteria genuinely reflect usable Sesotho text.
+
+Combining these frameworks, this mini-thesis operationalises corpus quality through three measurable criteria. First, language purity which addresses  the basic level of fitness of use which is how much of the corpus is actual Sesotho. Following \citet{kreutzer-etal-2022-quality} a random sample of 100 sentences will be annotated using binary taxonomy with a target of 90\% correct sentences. This draws on \citet{hurtado2022documents} concept of textual representation error.  Second, orthographic awareness measures the pipeline's ability to correctly classify South African versus Lesotho Sesotho variants on a held-out test set of 200 labelled sentences, with a target F1-score of at least 0.85. This criterion directly operationalises \citet{wang2026modernizing}'s syntactic variability challenge. Third, downstream utility demonstrates that quality improvements translate into practical benefit: a model trained on pipeline-curated data must achieve a statistically significantly higher F1-score (p < 0.05) on a text classification task than the same model trained on unfiltered web data, using 5-fold cross-validation. This extrinsic criterion aligns with \citet{xiao2023evaluating}'s concept of concurrent validity, substituting task performance for human expert ratings as the reference standard. Together, these three criteria provide a layered definition that moves from intrinsic linguistic properties to practical task performance, ensuring the corpus is not only clean by internal metrics but also useful for real NLP applications.
+
+
+\subsection{Existing automated pipeline approaches}
+The literature on automated web corpus construction reveals a clear division between two incompatible paradigms: generic multilingual pipelines that prioritize scale at the expense of linguistic accuracy, and language-specific manual pipelines that achieve quality but cannot be scaled. Neither adequately addresses the needs of low-resource African languages such as Sesotho, which require both automation and linguistically informed processing. Generic pipelines such as the Brno Corpus Processing Pipeline \citet{suchomel2020better} and the Colossal Clean Crawled Corpus \citep{dodge2021documenting} apply standardized, language-agnostic filters—n-gram models, blocklists, and statistical language identification—that treat all languages as statistically equivalent. \citet{suchomel2020better} acknowledges that yield rates vary significantly across languages but does not address how morphological complexity affects these rates, while \citet{dodge2021documenting} document that blocklist filtering disproportionately removes minority dialects and that langdetect performs poorly for non-dominant languages. The Labadian Crawler \citet{de2024data} follows a similar statistical approaches, with \citet{de2024data} reporting that their Tetun LID model exhibits biases toward frequent terms and achieves perfect tokenization only on texts conforming to a single standard orthography. None of these pipelines perform morphological analysis or adjust preprocessing based on writing system type. At the opposite extreme, language-specific manual pipelines such as the Swahili corpus \citet{masua2024heart} and the Tetun corpus \citet{de2024data} achieve high quality through intensive, custom effort—manually identifying sources, developing language-specific tokenizers from scratch, and training dedicated LID models—but these methods do not generalize. The CHB-EDC system \citet{Zhou2024} achieves high accuracy for structured medical form extraction but is not designed for general web corpus construction. \citet{nchabeleng2020evaluating} directly identify the specific failures of generic pipelines for Bantu languages: conjunctively versus disjunctively written languages require different preprocessing (morphological analysis versus part-of-speech tagging); stemming verbs and adjectives is crucial to avoid sparsity, but stemming nouns destroys semantic information encoded in noun class prefixes; threshold values in topic modeling must be adjusted for agglutination; and sentiment analysis should be performed before negation morphemes are lost. Their evaluation on Twitter data demonstrates that applying generic pipelines to Bantu languages produces systematically degraded results. For a language like Sesotho—a disjunctively written Bantu language with noun class systems, extensive concordial agreement, and thousands of possible verb forms per root—a generic pipeline would treat each inflected verb form as a separate token, fail to recognize negation morphemes as grammatical markers, and mishandle disjunctive writing. Conversely, replicating the Swahili or Tetun manual approach would require developing a custom tokenizer, part-of-speech tagger, and LID model from scratch. The literature has established robust crawling infrastructure \citep{suchomel2020better, de2024data} and separately documented the linguistic preprocessing requirements for Bantu languages \citet{nchabeleng2020evaluating}. However, no existing pipeline integrates domain-general crawling efficiency with language-specific morphological processing. The gap is not in automation technology or in linguistic knowledge but in their integration.
+
+\subsection{Language identification as a pipeline component}
+Language identification (LID) is a critical upstream component of web corpus construction, yet the literature indicates that LID for low-resource languages remains an unsolved problem. Existing tools and evaluation paradigms systematically fail to account for a fundamental asymmetry: false positives (misclassifying non-target text as a target language) are more damaging than false negatives because incorrectly included text cannot be reliably identified or removed after collection, whereas excluded text can potentially be recovered through additional crawling.
+
+\citet{kreutzer-etal-2022-quality} demonstrate that standard evaluation metrics such as F1-score are misleading when applied to real-world web data. A model achieving 98\% F1 on clean benchmarks produced monolingual corpora with a median precision of only 5\% when evaluated on actual web crawls, due to extreme class imbalance. They recommend prioritising the false-positive rate (FPR) over F1 in real-world scenarios. \citet{kargaran2024glotcc} address this directly in GlotLID, introducing "und" labels for unseen scripts and "zxx" labels for six types of web noise (mis-rendered PDFs, Mojibake, binary files, etc.). Their design explicitly prioritises FPR reduction over raw F1: on 2,102 labels, GlotLID achieves 0.991 F1 but an FPR of just 0.000003. This low FPR ensures that text from other languages or noise is rarely misclassified as a target low-resource language.
+
+The consequences of inadequate LID are severe for African languages. \citet{adebara2022afrolid} audit existing web-crawled datasets and find that at least 15 corpora were completely erroneous for African language content, 82 were mislabelled, and fastText embeddings for Yoruba contained 90\% words from other languages. They introduce AfroLID for 517 African languages, though as a Transformer model, it is less efficient for billion-scale processing.
+
+\citet{fedorova2026openlid} provides recent production experience with OpenLID, evaluating multiple models on closely related languages. They find that OpenLID-v3 achieves better precision and FPR than its predecessor, while GlotLID achieves better recall; top-1 ensembling achieves the lowest FPR. Critically, they find that improving precision removes substantial data (e.g., 45\% of Venetian samples), demonstrating a real trade-off between precision and coverage. They conclude that reliable evaluation of LID in similar languages requires language-group-specific benchmarks rather than relying on high-level metrics.
+
+For a corpus pipeline targeting a low-resource Bantu language like Sesotho, the implication is clear: false positives are more costly than false negatives. A document incorrectly classified as Sesotho irreversibly contaminates the final corpus; a document incorrectly rejected represents a recoverable loss. Therefore, LID selection should prioritise FPR minimisation over raw F1. GlotLID's explicit design philosophy of prioritising FPR \citet{kargaran2024glotcc} and its empirical performance with very low FPR make it suitable, subject to evaluation on language-group-specific benchmarks \citep{fedorova2026openlid}. The alternative—a higher-recall, higher-FPR model—risks producing a corpus whose Sesotho subset is contaminated with other languages and noise.
+\clearpage
+\section{Discussion}
+The literature collectively reveals that the African NLP crisis is a pipeline design problem, not merely a scarcity problem. Quality failures are reproduced at every stage: web-crawled data is noisy and domain-skewed, filters are calibrated against English-language assumptions, and the multilingual models trained on the resulting corpora underperform on African languages regardless of their scale. Cross-lingual transfer and data augmentation, the dominant technical responses to scarcity, function as palliatives that work with poor data rather than addressing it at the source. AfriBERTa's performance matching XLM-R on 100 times less data confirms that quality, not volume, is the decisive variable.
+Sesotho sits at a uniquely difficult intersection of these structural problems. Its agglutinative morphology, dual competing orthographies, and limited digital presence combine in ways that no existing pipeline addresses simultaneously. Generic pipelines apply language-agnostic filters that fail Bantu languages by design, while language-specific manual approaches achieve quality at the cost of scalability. The proposed pipeline occupies the space between these extremes: automated enough to be scalable, and linguistically informed enough to handle Sesotho's specific challenges through principled language identification, orthographic classification, and quality-gated curation. The core contribution is not a corpus alone, but a replicable, quality-first pipeline design grounded in the specific properties of the target language — establishing empirically, with pre-specified measurable thresholds, that linguistically targeted curation produces more useful resources than high-volume collection without linguistic grounding.
+\clearpage
+\section{Summary}
+This literature review established the context and technical grounding for a quality-first automated pipeline for Sesotho corpus construction. Section 2 demonstrated that the underrepresentation of African languages in NLP is structural and measurable, that web-crawled multilingual data fails African languages through quality failures that are systematically reproduced across the entire data pipeline, that cross-lingual transfer and data augmentation circumvent rather than solve the problem of data scarcity, and that large multilingual models underperform on African languages by design rather than by insufficient scale. Section 3 situated Sesotho within this landscape, establishing that its agglutinative morphology generates persistent out-of-vocabulary failures that generic tokenisers cannot handle, that its two competing orthographies produce internally incoherent corpora when web-crawled without explicit variant handling, and that existing Sesotho resources are heavily domain-skewed and orthographically inconsistent. Section 4 defined corpus quality through three measurable criteria — language purity, orthographic classification accuracy, and downstream task performance — surveyed existing automated pipeline approaches and identified the integration gap between generic scalable pipelines and high-quality language-specific ones, and established that false positive rate rather than F1 is the operative metric for language identification in low-resource corpus construction. Together, these findings motivate the proposed pipeline: an automated, modular system that addresses Sesotho's specific challenges at the point of collection rather than compensating for poor data quality after the fact.
+
+
+\chapter{Methodology}
+\section{Overview}
+This chapter documents the methodology for the automated Sesotho corpus construction pipeline proposed in this study. The pipeline is designed to address the four research objectives established in Chapter 1 directly. The objective of analysing the limitations of existing Sesotho corpora and web-based data sources informed the source selection strategy documented in \ref{sec:data_selection}, which identifies institutionally verified sources and establishes a source-based provenance labelling strategy as an alternative to the orthographically inconsistent web-crawled resources identified in the literature. The objective of developing an automated pipeline has shifted to a semi-automated approach detailed in \ref{sec:semi-automated}, a four-operation cleaning sequence, and an orthographic classifier, integrated into a modular system. The objectives of reducing cross-lingual contamination and managing orthographic variation are addressed, respectively, through GlotLID-based language identification and a two-component orthographic classifier. The objective of evaluating pipeline effectiveness will be addressed through assessing performance against downstream utility, orthographic classification accuracy, and language purity.
+
+\section{Dataset and Data Selection}
+\label{sec:data_selection}
+
+The construction of a supervised orthographic classifier requires training data in
+which the orthographic variant of each sentence is known with confidence. For a
+A low-resource language such as Sesotho has no pre-existing labelled dataset covering
+both the South African Sesotho (SAS) and Lesotho Sesotho (LS) orthographic
+Conventions were simultaneously available at the time of this study. This section
+documents the sources selected to constitute the training corpus, the rationale
+for each selection decision, and the labelling strategy employed to assign
+orthographic variant labels without manual sentence-level annotation.
+
+\subsection{Labelling strategy: source-based provenance}
+
+Ground truth labels for classifier training were assigned using a
+\textit{source-based provenance} strategy: sentences inherit the orthographic
+variant label of the institutional source from which they were collected, rather
+than from direct manual inspection of each sentence. [read MINZ 2009 paper]
+
+This condition was verified empirically prior to classifier training. For each
+source, the average occurrence of variant-discriminating graphemic markers
+per sentence was computed using the substitution rules documented by
+\citet{makutoane2022people}. Specifically, the semi-vowel pairs
+\textit{ea}/\textit{oa} (LS) versus \textit{ya}/\textit{wa} (SAS), and
+the consonant cluster pairs \textit{kh}/\textit{ch} (LS) versus
+\textit{kg}/\textit{tjh} (SAS). LS-labelled sentences yielded a mean LS
+marker density of 0.89 per sentence and a mean SAS marker density of 0.00.
+SAS-labelled sentences yielded a mean SAS marker density of 1.34 per sentence
+and a mean LS marker density of 0.00. The complete absence of cross-variant
+markers in each group confirm that source provenance reliably identifies
+orthographic variant and that source-based labelling is a valid ground truth
+strategy for this corpus.
+
+\subsection{South African Sesotho sources}
+
+\paragraph{Vuk'uzenzele — DSFSI corpus.}
+The primary source of SAS training data is the Vuk'uzenzele corpus maintained
+by the Data Science for Social Impact (DSFSI) research group at the University
+of Pretoria \citep{marivate2020investigating}. Vuk'uzenzele is the South African
+government's official public information magazine, published in all eleven
+official languages, including Sesotho. The magazine is produced under South
+African government style guidelines, which mandate adherence to the SAS
+orthographic standard formalised in 1959. The DSFSI corpus provides
+sentence-aligned English--Sesotho pairs extracted from digitised magazine
+editions spanning 2018 to 2022, representing 84 editions. The Sesotho component
+of the simple sentence-alignment output was used, extracting the target language
+column from each aligned CSV file.
+
+This source was selected on three grounds. First, its institutional origin
+guarantees SAS orthographic consistency, since government publications are
+produced to a standardised style. Second, it represents the domain of public
+information and civic communication, which is underrepresented in existing
+Sesotho resources, which are heavily skewed toward religious and legislative
+text \citep{kwon2026afroscope}. Third, the corpus is publicly available under an
+open licence, ensuring reproducibility.
+
+\subsection{Lesotho Sesotho sources}
+
+\paragraph{Sesotho News (SN) dataset.}
+The primary source of LS training data is the Sesotho News dataset introduced
+by \citet{mokhosi2024sesotho}, available from Zenodo (record 10531959). The
+dataset comprises 2,401 news headlines manually scraped from two Lesotho-based
+online newspapers and annotated for sentiment analysis and aspect-based sentiment
+analysis. Headlines were collected using the Lesotho orthographic standard, as
+confirmed by the source publication. \texttt{NewsSA.txt} and \texttt{NewsABSA.txt} were used from the dataset, providing sentence-level LS text
+across a news domain.
+
+This source was selected because it is the only existing Sesotho dataset that
+explicitly documents its orthographic standard, is independently peer-reviewed,
+covers the news domain, and provides sufficient sentence-level granularity for
+classifier training. The authors explicitly release it for NLP research on Sesotho. Notably, the same
+The dataset is used later as the evaluation benchmark for the downstream sentiment
+classification task, creating a direct methodological connection between the
+training corpus and the extrinsic quality evaluation.
+
+\paragraph{Nalibali children's stories.}
+A supplementary LS source was obtained by scraping the Nalibali reading
+campaign website (\url{https://nalibali.org}), a South African literacy
+initiative that publishes multilingual children's stories in all eleven official
+languages. The Sesotho stories are available at the \texttt{?lang=st-ls} URL
+parameter, denoting the Lesotho Sesotho orthographic variant. Story text was
+extracted from the \texttt{elementor-widget-text-editor} content containers
+using BeautifulSoup, with navigation elements, author attributions, and
+Discussion questions excluded via pattern matching.
+
+This source was selected to increase diversity in the LS domain. The SN dataset
+provides news headlines, which are short, syntactically compressed, and
+domain-specific. Children's stories provide longer, more syntactically complete
+sentences across narrative and descriptive registers, partially mitigating the
+domain skew that \citet{kwon2026afroscope} identify as a systemic quality
+failure in African language corpora. Nalibali is a registered non-governmental
+organisation with a citable institutional identity, satisfying the requirement
+for source-based provenance reliability.
+
+\subsection{Corpus composition}
+
+Following GlotLID verification, deduplication, and a minimum length filter of
+Five words, the training corpus comprised 302 sentences: 200 SAS sentences
+from Vuk'uzenzele and 102 LS sentences from the SN dataset. The class
+An imbalance of approximately 2:1 reflects the relative availability of
+digitised text in each orthographic variant rather than a sampling decision,
+and is addressed during classifier training through balanced class weighting
+rather than oversampling, to avoid introducing artificial distributional
+regularities into the feature space. The corpus size, while modest relative
+to high-resource standards, is appropriate for a proof-of-concept classifier
+demonstrating the viability of the orthographic distinction detection approach
+on a task where, as Section 3.4 establishes, the discriminating signal is
+concentrated in a small and consistent set of sub-word character patterns. 
+
+\section{Implementation}
+The pipeline was implemented in Python 3.11 across three modular scripts, each corresponding to a discrete pipeline stage. The modular architecture follows the design principle articulated by \citet{suchomel2020better} that pipeline components should be independently testable before integration, so that errors introduced at one stage do not propagate silently to another stage. A similar modular approach is adopted by \citet{de2024data} in the Labadian Crawler for Tetun and by \citet{gumede2025creating} in the ULPDO isiZulu corpus construction, both of which combine automated processing with targeted human input at key quality-decision points.
+
+\subsection{Stage 1: Semi-Automated Collection and Identification}
+\label{sec:semi-automated}
+Data collection followed a semi-automated approach, with human judgement exercised at the source-selection stage and all subsequent processing automated. This design is consistent with the hybrid approach of \citet{gumede2025creating}, in which humans provide expert opinion on which sources are appropriate, while automation handles extraction, verification, and structuring at scale. The distinction was made due to a narrowing of the project's scope. The semi-automated process is favoured by \citet{barbaresi2013challenges} as \citet{barbaresi2013challenges} argues that crawling without expert knowledge of the target language is liable to produce systematic distortions, since search engines and broad crawlers favour English content and structurally well-connected domains. For a language like Sesotho, whose digital presence is concentrated in specific institutional and community domains rather than broadly distributed across the web, targeted source selection by a researcher with knowledge of the language community provides a more reliable starting point than unrestricted automated discovery.
+
+Sentence segmentation was performed by splitting at terminal punctuation characters, including full stop, exclamation mark, question mark, and newline. Segments of more than three words were retained, excluding isolated headers, navigation labels, and single-word or two-word fragments that are not linguistically usable, while retaining grammatically complete short sentences typical of new headlines and children's story text. \citep{de2024data} adopts a comparable minimum word threshold in their Tetun corpus pipeline.
+
+Each candidate sentence was submitted individually to GlotLID \citep{kargaran2024glotcc}, a fastText-based language identification model covering 1655 language varieties. GlotLID was selected for its false-positive rate minimisation over the raw F1 score, which is critical because incorrectly included text produces irreversible contamination. In contrast, incorrectly excluded text is a recoverable loss \citep{kreutzer-etal-2022-quality}. This asymmetry is particularly consequential for low-resource languages like Sesotho, which \citet{kargaran2024glotcc} demonstrate is prone to cousin-language misclassifications when LID tools with inadequate coverage are used. Sentences where GlotLID's top-1 prediction was \texttt{sot\_Latn} with a confidence score at or above 0.7 were retained; all others were discarded.
+
+The confidence threshold of 0.7 was determined empirically through diagnostic testing on known Sesotho sentences from the Mokhosi dataset prior to full collection. Short headlines of four to six words received GlotLID scores between 0.85 and 0.91, indicating that the conventional threshold of 0.9, calibrated against longer texts in high-resource settings, would systematically reject valid LS content. \citet{fedorova2026openlid} document an equivalent precision-coverage trade-off in their evaluation of OpenLID-v3, finding that raising the precision threshold removed up to 45\% of samples from minority language varieties. The 0.7 threshold preserves short headline sentences while maintaining reliable separation from closely related languages. Diagnostic evaluation confirmed that Sestswana (\texttt{tesn\_Latn}) and Sesotho sa Leboa (\texttt{nso\_Latn}) consistently scored below 0.2 on Sesotho-labelled sentences, providing a clear confidence margin between acceptance and rejection.
+\subsection{Stage 2: Cleaning}
+The cleaning stage applies four operations in sequence, each
+motivated by a specific quality concern identified in the literature.
+
+\textbf{Unicode normalisation to NFC form} was applied first using
+Python's \texttt{unicodedata. normalise} function. NFC normalisation
+ensures that diacritical marks are represented in their canonical
+composed form rather than as a decomposed sequence of base characters
+and combining diacritics. This step directly addresses the sub-lexical
+degradation documented by \citet{de2007automatic}, who
+demonstrate that OCR processing and non-standard text encoding
+pipelines systematically strip or misrepresent diacritical marks in
+African language text. For Lesotho Sesotho specifically, diacritical
+preservation is not merely a formatting concern: LS orthography
+encodes phonological distinctions through diacritics that SAS
+orthography omits \citep{matlosa2017sesotho}, meaning that incorrect
+normalisation would destroy a primary signal for the orthographic
+classifier downstream.
+
+\textbf{URL removal} was applied using a regular expression matching
+\texttt{http} or \texttt{https} strings, eliminating hyperlink
+artefacts introduced during web extraction that would otherwise
+contribute meaningless character sequences to the feature space.
+
+\textbf{Whitespace normalisation} collapsed multiple consecutive
+spaces, tabs, and newlines into single spaces, and stripped leading
+and trailing whitespace. This step addresses formatting artefacts
+introduced by HTML rendering and line-break
+conventions that vary across source formats.
+
+\textbf{deduplication} removed exact duplicate sentences using
+pandas \texttt{drop\_duplicates} on the text column.
+\citet{tatariya2024good} document that up to 40\% of
+web-crawled content consists of exact duplicates, with
+paragraph-level duplication reaching 70\% in some Common Crawl
+snapshots. Deduplication at the sentence level ensures that
+repetitive boilerplate content, such as navigation text, repeated
+disclaimers, and templated phrases common in government and
+Institutional sources do not inflate corpus statistics or
+Bias classifier training by overrepresenting a particular character
+sequences. This concern is also documented by
+\citet{cahyawijaya2023nusawrites}, who observe that Buginese
+Wikipedia data exhibited very low lexical diversity despite a large
+token count, attributable to boilerplate repetition that deduplication
+would have addressed.
+
+A \textbf{minimum length filter} of five words was then applied,
+removing fragments that do not constitute usable linguistic content.
+The five-word threshold is consistent with the minimum meaningful
+sentence length assumed in low-resource corpus construction
+pipelines \citep{de2024data}.
+
+\subsection{Stage 3: Orthographic Classification}
+The orthographic classification stage constitutes the pipeline's novel contribution, as no tool automatically distinguishes SAS from LS orthography at the sentence level. This stage was implemented as a two-component system, being a rule-based baseline classifier and a trained character n-gram classifier, with both evaluated on a held-out test set to assess the value added by the learned model over the explicit rule encoding.
+
+\subsubsection{Rule-Based Baseline}
+\label{sec:rulebased}
+
+The rule-based classifier implements the substitution rules documented by \citet{makutoane2022people} directly as Python
+marker-counting logic. For each sentence, the occurrence count of LS
+markers (\textit{ea}, \textit{oa}, \textit{kh}, \textit{ch},
+\textit{li}) and SAS markers (\textit{ya}, \textit{wa},
+\textit{kg}, \textit{tjh}) are computed, and the sentence is
+assigned the variant label corresponding to the higher marker count,
+with SAS assigned as the default in the case of a tie. The marker
+sets were derived directly from Makutoane's documented substitution
+table, requiring no training data.
+
+This baseline serves two purposes. First, it operationalises the
+existing linguistic knowledge about the SAS/LS distinction,
+providing a performance ceiling achievable through an explicit rule
+encoding. Second, it provides a principled lower bound against which
+The learned classifier can be evaluated. If the trained model does
+not surpass the rule-based baseline, this would indicate that the
+character n-gram features capture nothing beyond what the literature
+already documents.
+
+\subsubsection{Character N-Gram Logistic Regression Classifier}
+\label{sec:learned}
+
+The learned classifier was implemented as a scikit-learn
+\texttt{Pipeline} combining a \texttt{CountVectorizer} with a
+\texttt{LogisticRegression} estimator. The pipeline abstraction
+ensures that the same vectorisation parameters are applied during training
+are applied identically during inference on new text, eliminating
+The risk of train-test leakage through inconsistent preprocessing.
+
+\paragraph{Feature representation.}
+Character n-grams spanning lengths two to four
+(\texttt{ngram\_range=(2,4)}, \texttt{analyzer='char\_wb'}) were
+selected as the feature representation. The character word-boundary
+analyser (\texttt{char\_wb}) pads each token with spaces before
+extracting n-grams, ensuring that boundary characters are captured
+as informative features rather than being discarded.
+
+Character-level features are the appropriate representation for
+the SAS/LS classification task because of the orthographic distinction
+is sub-lexical. The discriminating signal lies in character sequences
+such as \textit{ea} and \textit{oa} (LS) versus \textit{ya} and
+\textit{wa} (SAS), which appear within words rather than as
+independent tokens. Word-level features would require the exact
+surface form of a discriminating word to appear in a sentence before
+Any signal is captured; character n-grams capture orthographic
+patterns regardless of the specific word in which they appear.
+This property is critical for a morphologically rich agglutinative
+language like Sesotho, where a single root generates thousands of
+inflected surface forms through prefixation and suffixation
+\citep{kambarami2021computational}. Character n-gram models have
+established precedent in a similar language and dialect
+identification literature: \citet{cianflone2016n} report that
+character n-gram models achieved 88.45\% accuracy on the VarDial
+2016 Discriminating Similar Languages shared task, outperforming a
+character-based convolutional neural network on the same data and
+closely approaching the top system at 89.38\%. Their analysis
+confirms that n-grams of size 7--8 peak in accuracy for similar
+language discrimination, though for a binary classification task
+with a highly consistent orthographic signal, shorter n-grams of
+size 2--4 is sufficient and reduces sparsity.
+\citet{de2024data} similarly demonstrates that a Multinomial
+Naive Bayes classifier with 5-gram characters achieved 99.77\%
+accuracy for Tetun language identification, confirming character
+n-gram effectiveness for low-resource language discrimination.
+
+The n-gram range of 2--4 was chosen to capture both the core
+two-character substitution pairs (\textit{ea}/\textit{ya},
+\textit{oa}/\textit{wa}) and the longer consonant cluster
+divergences (\textit{tjh}/\textit{ch}, \textit{kgh}/\textit{kh}).
+Unigrams provide no discriminative signal since individual
+Characters are shared across both variants. Extending beyond
+4-grams would increase feature dimensionality without adding
+signal for the specific substitutions documented by
+\citet{makutoane2022people}.
+
+\paragraph{Diacritic preservation.}
+The \texttt{strip\_accents} parameter was explicitly set to
+\texttt{None}, overriding the scikit-learn default, which strips
+diacritical marks during vectorisation. This override is
+linguistically motivated: LS orthography preserves diacritics
+that SAS orthography omits \citep{matlosa2017sesotho}. Stripping
+diacritics during vectorisation would destroy the orthographic
+signal they carry, degrading classifier performance on the LS
+class and producing a feature space that does not reflect the
+actual textual properties of the two variants.
+
+\paragraph{Class weighting and regularisation.}
+The \texttt{class\_weight='balanced'} parameter adjusts sample
+weights inversely proportional to class frequencies, compensating
+for the 200 SAS / 102 LS imbalance in the training corpus without
+requiring oversampling. Oversampling was avoided because it would
+introduce artificial regularity into the LS character distribution
+by replicating existing sentences, potentially causing the
+classifier to overfit to specific headline constructions rather
+than general orthographic patterns. The regularisation parameter
+$C$ was set to 1.0, the scikit-learn default, which was retained
+as no systematic overfitting was observed on the held-out test
+set.
+
+\paragraph{Evaluation metric.}
+Macro-averaged F1 was used as the primary evaluation metric,
+assigning equal weight to both classes regardless of their
+frequency in the test set. This choice aligns with the pipeline's
+design goal of handling both SAS and LS reliably, not merely
+achieving high overall accuracy by exploiting the majority class.
+
+
+\subsection{Data Processing and Sampling }
+
+The verified and cleaned corpus was split into training and test
+sets using an 80/20 ratio with stratified sampling, preserving the
+SAS/LS class proportions in both partitions. Stratification was
+applied because the 2:1 class imbalance would otherwise risk
+concentrating LS sentences disproportionately in one split,
+producing evaluation results that do not reflect the classifier's
+generalisation across both variants. The split yielded 241 training
+sentences (160 SAS, 81 LS) and 61 test sentences (40 SAS, 21 LS).
+A fixed random seed (\texttt{random\_state=42}) was applied to
+ensure reproducibility.
+
+\subsection{Parameter Tuning}
+
+No hyperparameter search was conducted beyond the design decisions
+documented in Section~\ref{sec:learned}. The n-gram range, maximum
+feature count (1,000), classifier type, and regularisation
+parameters were set based on the linguistic properties of
+the task and established practices in a similar language
+identification literature \citep{cianflone2016n,
+de2024data} rather than through data-driven optimisation.
+This approach was adopted to avoid the risk of overfitting
+hyperparameters to a small held-out test set of 61 sentences, which
+would provide unreliable estimates of generalisation performance.
+
+\subsection{Evaluation Pipeline}
+The classifier was trained by calling \texttt{pipeline.fit(X\_train,
+y\_train)} on the 241-sentence training set, where the vectoriser
+and classifiers are fitted jointly within the scikit-learn
+\texttt{Pipeline} object. Evaluation was performed by calling
+\texttt{pipeline.predict(X\_test)} on the 61-sentence held-out test
+set, with performance measured using macro-averaged F1, per-class
+precision and recall, and a confusion matrix.
+
+The rule-based baseline was evaluated on the same 61-sentence test
+set using the marker-counting logic described in
+Section~\ref{sec:rulebased}, enabling a direct comparison on
+identical data. The interpretability of the learned classifier was
+assessed by extracting the \texttt{LogisticRegression} coefficient
+vector and identifying the character n-gram features with the
+largest positive coefficients for each class, following the
+interpretability-oriented evaluation approach adopted by
+\citet{de2024data} in their LID model analysis.
+
+\chapter{Implementation}
+\section{Overview}
+This chapter documents the concrete realisation of the semi-automated pipeline described in Chapter 3, presenting the implementation of each stage together. The pipeline was implemented in Python 3.11 across a set of modular scripts, each corresponding to a discrete stage. The stages are semi-automated data collection, language identification, quality filtering, and orthographic classification.
+
+
+
+\section{Stage 1: Semi-automated Data Collection}
+
+Data collection used a semi-automated approach, with source selection performed manually by the researcher. At the same time, all subsequent processing, including fetching, extraction, filtering, and labelling, was handled by the pipeline. 
+
+Sources were configured as structured tuples containing the URL, the orthographic variant label, a source identifier, an optional CSS selector for targeted extraction, and an optional list of skip patterns for excluding boilerplate content. The following shows the SAS and LS static source configurations:
+
+\begin{lstlisting}[language=Python, caption={Seed source configuration for SAS and LS variants.}, label={lst:sources}]
+[language=Python, caption={Seed source configuration for SAS and LS variants.}, label={lst:sources}]
+SAS_STATIC_SOURCES = [
+    ("https://www.gov.za/st",              "SAS", "govza_sesotho",  None, None),
+    ("https://www.sabc.co.za/sabc/sesotho/","SAS","sabc_sesotho",   None, None),
+    ("https://www.vukuzenzele.gov.za",     "SAS", "vukuzenzele",    None, None),
+    ("https://www.dbe.gov.za/sesotho",     "SAS", "dbe_sesotho",    None, None),
+    ("https://www.saps.gov.za/sesotho",    "SAS", "saps_sesotho",   None, None),
+]
+ 
+LS_STATIC_SOURCES = [
+    ("https://www.gov.ls",                 "LS",  "gov_ls",         None, None),
+    ("https://www.lestimes.com",           "LS",  "lestimes",       None, None),
+    ("https://www.thepost.co.ls",          "LS",  "thepost_ls",     None, None),
+    ("https://www.leihlolabasotho.co.ls",  "LS",  "leihlolabasotho",None, None),
+]
+\end{lstlisting}
+
+Beyond the static source lists, three additional source-specific collection methods were implemented: a systematic scraper for the Nal'ibali reading campaign, a downloader for the Vuk'uzenzele DSFI GitHub corpus, and a local PDF processor for Sesotho matric examination papers.
+
+\subsection{Web extraction}
+
+HTML text was extracted using the \texttt{fetch\_and\_collect} function, which handles URL fetching, content selection, paragraph extraction, and the quality and LID filtering chain in a single call. The function accepts an optional CSS class selector for cases where the target content is contained within a specific page element, as is the case with the Nalibali website, which renders story content inside \texttt{div} elements carrying the class \texttt{elementor-widget-text-editor}:
+
+\begin{lstlisting}[language=Python, caption={Core web extraction function.}, label={lst:fetch}]
+def fetch_and_collect(url, label, source_name, selector=None, skip_patterns=None):
+    r = requests.get(url, headers=HEADERS, timeout=15)
+    soup = BeautifulSoup(r.text, "html.parser")
+ 
+    if selector:
+        divs = soup.find_all("div", class_=selector)
+        paragraphs = [p.get_text() for div in divs
+                      for p in div.find_all("p")]
+    else:
+        paragraphs = [p.get_text() for p in soup.find_all("p")]
+ 
+    if skip_patterns:
+        paragraphs = [p for p in paragraphs
+                      if not any(sp in p.lower()
+                                 for sp in skip_patterns)]
+ 
+    raw_text = " ".join(paragraphs)
+    sentences = split_sentences(clean_text(raw_text))
+ 
+    results = []
+    for sentence in sentences:
+        if not is_quality(sentence):
+            continue
+        ok, conf = verify_sesotho(sentence)
+        if ok:
+            results.append({"text": sentence, "label": label,
+                             "lid_confidence": conf,
+                             "source": source_name,
+                             "source_url": url})
+    return results
+\end{lstlisting}
+
+The Nalibali scraper first traversed the eight category pages to collect story URLs dynamically, then called \texttt{fetch\_and\_collect} on each story using the \texttt{elementor-widget-text-editor} selector and a list of skip patterns to exclude author attributions, translator credits, and comprehension question paragraphs. This approach reflects the structural reality of modern web publishing: content is rarely found in raw \texttt{<p>} tags at the page root. However, it is embedded within component frameworks that require targeted selection for clean extraction.
+
+\subsection{PDF extraction}
+
+Government documents fetched from remote URLs using \texttt{requests} library, and Sesotho matric examination papers (National Senior Certificate, Grade 12 Home Language and First Additional) loaded from local storage. PyMuPDF (\texttt{fitz}) was used for text extraction in both cases. 
+
+Examination papers required additional handling to suppress non-Sesotho content. An english-density filter was applied at the page level where pages with more that 15\% of words matched the English marker lexicon were skipped entirely, retaining only the pages dominated by Sesotho content:
+
+\begin{lstlisting}[language=Python, caption={English-density page filter for exam PDF extraction.}, label={lst:pdf}]
+for page_num in range(2, total_pages - 1):
+    page_text = doc[page_num].get_text("text")
+    eng_count = len([
+        w for w in re.findall(r'\b[a-zA-Z]{4,}\b', page_text.lower())
+        if w in ENGLISH_MARKERS
+    ])
+    total_words = len(page_text.split())
+    if total_words > 0 and eng_count / total_words > 0.15:
+        continue  # skip English-heavy pages
+    # process remaining pages normally
+\end{lstlisting}
+
+The first two pages of each PDF were unconditionally skipped to exclude cover pages and rubrics.
+
+\subsection{Vuk'uzenzele DSFI Corpus}
+
+The Vuk'uzenzele corpus was accessed directly from the DSFI Github repository via the GitHub Contents API, which returns a JSON listing of files in the \texttt{data/simple\_align\_output} directory. Each CSV file in this directory contains sentence-aligned English--Sesotho pairs. The Sesotho column was identified by searching for column names containing the substrings \texttt{sot}, \texttt{sesotho}, or \texttt{target}, with a fallback to the second colum for files where no match was found:
+
+\begin{lstlisting}[language=Python, caption={Vuk'uzenzele Sesotho column extraction.}, label={lst:vuku}]
+sesotho_col = None
+for col in df_raw.columns:
+    if any(x in col.lower() for x in ["sot", "sesotho", "target"]):
+        sesotho_col = col
+        break
+if sesotho_col is None and len(df_raw.columns) >= 2:
+    sesotho_col = df_raw.columns[1]
+\end{lstlisting}
+
+
+\subsection{Collection Results}
+
+\begin{table}[ht]
+    \centering
+    \label{tab:corpus_sources}
+    \caption{Corpus Source breakdown after all quality filters.}
+    \begin{tabular}{llrr}
+     \toprule
+    \textbf{Source} & \textbf{Label} & \textbf{Domain} & \textbf{Sentences} \\
+    \midrule
+    Matric HL Exam (NSC)   & SAS & Educational  & 3,347 \\
+    Nalibali               & SAS & Narrative    & 3,165 \\
+    Vuk'uzenzele DSFSI     & SAS & Government   & 1,182 \\
+    gov.za PDFs            & SAS & Government   &   833 \\
+    \midrule
+    \textit{SAS subtotal}  &     &              & \textit{5,362} \\
+    \midrule
+    Mokhosi SN (Zenodo)    & LS  & News         &    99 \\
+    Lesotho web sources    & LS  & Mixed        & 3,165 \\
+    \midrule
+    \textit{LS subtotal}   &     &              & \textit{3,264} \\
+    \midrule
+    \textbf{Total}         &     &              & \textbf{8,626} \\
+    \bottomrule
+    \end{tabular}
+\end{table}
+
+
+
+\section{Stage 2: Language Identification and Quality Filtering}
+
+\subsection{Text cleaning}
+
+Raw text from all sources underwent a four-step cleaning procedure before LID verification. Unicode normalisation to NFC form was applied first, ensuring that diacritical marks are represented in their canonical composed form rather than as decomposed sequences, which is critical for LS content, where diacritics encode phonological distinctions that SAS orthography omits \citep{matlosa2017sesotho}. URL strings were then removed, followed by HTML entity decoding and whitespace normalisation. Question numbers that appear at the start of sentences, a common artefact of PDF extraction of examination papers, were stripped using a regular expression.
+
+\begin{lstlisting}[language=Python, caption={Text cleaning function.}, label={lst:clean}]
+def clean_text(text):
+    text = unicodedata.normalize("NFC", str(text))
+    text = re.sub(r"http\S+", "", text)
+    text = re.sub(r"&[a-z]+;", "", text)
+    # strip leading question numbers e.g. "3." "(a)" "[1]"
+    text = re.sub(r"^\s*[\d]+[\.\)]\s*", "", text)
+    text = re.sub(r"^\s*[\(\[]\s*[a-zA-Z\d]\s*[\)\]]\s*", "", text)
+    text = re.sub(r"\s+", " ", text).strip()
+    return text
+\end{lstlisting}
+
+\subsection{Code-Switching Detection}
+
+A code-switching filter was applied to reject sentences containing substantial English content. The filter counts occurrences of unambiguously English words of three or more characters and rejects sentences where this count exceeds two. The three-character minimum is due to single-character tokens such as \textit{a}, \textit{o}, and \textit{e}, which are valid Sesotho morphemes serving as verb agreement prefixes and conjunctions, and would generate false positives under a naive English word count:
+
+\begin{lstlisting}[language=Python, caption={Code-switching detection function.}, label={lst:codeswitching}]
+ENGLISH_MARKERS = {
+    'the', 'and', 'for', 'are', 'but', 'not', 'you', 'all',
+    'can', 'will', 'that', 'this', 'they', 'from', 'have',
+    # ... (full set of 60+ unambiguous English function words)
+}
+ 
+def is_code_switched(text, max_english=2):
+    words = re.findall(r'\b[a-zA-Z]{3,}\b', text.lower())
+    hits = [w for w in words if w in ENGLISH_MARKERS]
+    return len(hits) > max_english
+\end{lstlisting}
+
+An additional filter rejected sentences containing \LaTeX\ anonymisation placeholders of the form \texttt{\$T\$} or \texttt{\$X\$}, which were present in a subset of the Mokhosi SN dataset where named entities needed to be anonymised for sentiment annotation. Sentences where fewer than 60\% of characters were alphabetic were also rejected to exclude fragments consisting predominantly of digits, punctuation or formatting symbols.
+
+
+\subsection{GlotLID Language Verification}
+
+Each candidate sentence was submitted to GlotLID \citep{kargaran2024glotcc} for language identification. GlotLID operates as a fastText classification model covering 1665 language varieties and returns a ranked list of predicted language labels with associated probability scores. The verification function retains a sentence only when GlotLID's top prediction is \texttt{sot\_Latn} (Sesotho in Latin script) with a confidence score at or above 0.7: 
+
+\begin{lstlisting}[language=Python, caption={GlotLID language verification function.}, label={lst:glotlid}]
+def verify_sesotho(sentence, threshold=0.7):
+    clean = sentence.replace("\n", " ").strip()
+    labels, scores = model.predict(clean, k=1)
+    lang  = labels[0].replace("__label__", "")
+    score = float(scores[0])
+    return lang == "sot_Latn" and score >= threshold, round(score, 4)
+\end{lstlisting}
+
+
+The 0.7 threshold was established empirically through diagnostic testing on known Sesotho sentences from the Mokhosi SN dataset, which showed that short new headlines of four to six words receive GlotLID scores between 0.85 and 0.91, well above the threshold but below the conventional 0.9 value calibrated for longer high-resource texts. Applying 0.9 would have systemically rejected valid LS headline sentences. At 0.7, closely related languages such as Sestswana and Sesotho sa Leboa consistently scored below 0.2 on the Sesotho test sentences, providing a clear margin of confidence between acceptance and rejection.
+
+\subsection{Deduplication and Length filtering}
+
+Exact duplicate sentences were removed using pandas \texttt{drop\_duplicates} on the text column after all other filters had been applied. A minimum sentence length of five words was enforced as the final filter to remove fragments from headers, captions, and page navigation elements that survived earlier cleaning steps.
+
+
+\section{Stage 3: Orthographic Classification}
+
+\subsection{Pre-Classification Normalisation}
+A dedicated normalisation step was applied to all text immediately before classification, distinct from the cleaning applied during collection. This step addresses the domain artefact of corpora containing text from sources with different formatting conventions, such as government prose sentences having full stops, and news headlines do not. This normalisation avoids the classifier partially learning these formatting signals rather than the orthographic character patterns that distinguish the two variants.
+
+
+The normalisation function converts text to lowercase, strips all punctuation, and pads the result with leading and trailing spaces. The space padding ensures that boundary-sensitive marker strings such as \texttt{"ea"} match correctly at the start and end of sentences, not only in the middle:
+
+\begin{lstlisting}[language=Python, caption={Pre-classification normalisation.}, label={lst:norm}]
+def normalize_for_classification(text):
+    text = str(text).lower()
+    text = re.sub(r'[^\w\s]', ' ', text)   # remove punctuation
+    text = re.sub(r'\s+', ' ', text).strip()
+    return " " + text + " "  # pad for boundary marker matching
+\end{lstlisting}
+
+Importantly, diacritical marks are preserved throughout this normalisation. The regular expression \texttt{[~\textbackslash w \textbackslash s]} retains word characters including accented characters, because stripping diacritics would destroy the LS orthographic signal they carry \citep{matlosa2017sesotho}.
+
+\subsection{Rule-Based Baseline}
+
+A rule-based baseline classifier was implemented directly from the substitution rules \citet{makutoane2022people}. For each normalised sentence, the function counts occurrences of LS and SAS marker strings and assigns the label corresponding to the higher count, defaulting to SAS on a tie:
+
+\begin{lstlisting}[language=Python, caption={Rule-based baseline classifier.}, label={lst:rulebased}]
+LS_MARKERS  = [" ea ", " oa ", " li", " kh", " ch"]
+SAS_MARKERS = [" ya ", " wa ", " kg", "tjh", " di"]
+ 
+def rule_based_classify(text):
+    ls_score  = sum(text.count(m) for m in LS_MARKERS)
+    sas_score = sum(text.count(m) for m in SAS_MARKERS)
+    return "LS" if ls_score > sas_score else "SAS"
+\end{lstlisting}
+
+The baseline solidifies the existing linguistic documentation of the SAS/LS distinction, providing a performance ceiling achievable through explicit rule encoding. If the trained classifier does not surpass this baseline, it would indicate that the character n-gram features learn nothing beyond what the literature already explicitly states.
+
+\subsection{Character N-Gram Logistic Regression Classifer}
+
+The trained orthographic classifier was implemented as a scikit-learn \texttt{Pipeline} chaining a \texttt{CountVectorizer} to a \texttt{LogisticRegression} estimator. The pipeline abstraction ensures identical vectorisation at training and inference time, preventing train-test leakage:
+
+\begin{lstlisting}[language=Python, caption={Character n-gram logistic regression pipeline.}, label={lst:classifier}]
+classifier = Pipeline([
+    ("vectorizer", CountVectorizer(
+        analyzer="char_wb",
+        ngram_range=(2, 4),
+        max_features=1000,
+        strip_accents=None,       # preserve LS diacritics
+    )),
+    ("clf", LogisticRegression(
+        max_iter=1000,
+        class_weight="balanced",  # corrects 1.6:1 SAS/LS imbalance
+        C=1.0
+    ))
+])
+\end{lstlisting}
+
+The \texttt{char\_wb} analyser extracts character n-grams within word boundaries, padding each token with spaces before extraction so that boundary characters contribute to capture both the core two character substitution pairs such as (\textit{ea}/\textit{ya}) and the longer consonant cluster divergences (\textit{tjh}/\textit{ch}). \texttt{strip\_accents} was set to \texttt{None} to overide the scikit-learn default, which strips diacritical marks during vectorisation and diacritcs are significant in the LS orthography; removing them would degrade classification performance on the LS class. The \texttt{class\_weight='balanced'} parameter adjusts sample contribution thus helping with the class imbalance.
+
+
+
+
+
+%come back and edit after the results chapter. 
+
+\section{Summary}
+
+\chapter{Results and Analysis}
+
+\section{Overview}
+
+This chapter presents the results of three evaluations conducted on the semi-automated Sesotho corpus construction pipeline. The evaluations are organised around the three research questions and their associated success criteria. 
+
+The first evaluation addresses the orthographic classifier's performance, while the second and third evaluations address the corpus's downstream utility.
+
+\begin{table}[ht]
+    \centering
+    \begin{tabular}{llll}
+     \toprule
+    \textbf{RQ} & \textbf{Evaluation} & \textbf{Criterion} &
+    \textbf{Outcome} \\
+    \midrule
+    RQ2 & Orthographic classifier & Macro F1 $\geq$ 0.85 & Met (0.87) \\
+    RQ3 & Perplexity (FLORES-200) & Reduction, $p < 0.05$ &
+          Met (31.8\%, $p < 0.001$) \\
+    RQ3 & NER (NWU corpus) & F1 improvement, $p < 0.05$ &
+          Not met ($\Delta = -0.001$) \\
+    \bottomrule     
+    \end{tabular}
+    \caption{Mapping of evaluations to research questions and success criteria.}
+    \label{tab:results_map}
+\end{table}
+
+\section{Orthographic classifier evaluation}
+
+\subsection{Experimental Setup }
+
+The orthographic classifier was evaluated on a stratified 20\% held-out test set of 1726 sentences (1073 SAS and 653 LS), drawn from the same verified corpus used for training. A rule-based baseline and trained character n-gram logistic regression classifier were evaluated on the same test set. The rule-based baseline implements the substitution rules documented by \citet{makutoane2022people} as a marker-counting function applied to pre-normalised text.
+
+\subsection{Rule-based Baseline Results}
+
+The rule-based baseline achieved a macro F1 of 0.4111 on the held-out test set. A per-class breakdown reveals that LS precision was 1.00 while LS recall was 0.03, meaning the baseline correctly identified almost no LS sentences despite perfect precision on the few it did label as LS. SAS precision was 0.63, and recall was not reported because the class dominated the predictions by default.
+
+This result is informative, as it confirms that the explicitly documented substitution rules are insufficient as a sentence-level classification mechanism. Markers such as \textit{ea}, \textit{oa}, \textit{ya}, and \textit{wa} do not appear uniformly across all Sesotho sentences. Many grammatically complete sentences that rely exclusively on the presence of these markers will therefore fail to identify the majority of genuine LS sentences, which motivates the need for a learned classifier that can exploit distributional character patterns beyond the documented marker set.
+
+\subsection{Learned classifier results}
+The character n-gram logistic regression classifier achieved a macro F1 of 0.8714 on the held-out test set, exceeding the proposed threshold of 0.85 and surpassing the rule-based baseline by 0.46 F1 points.
+
+\begin{table}[ht]
+    \centering
+    \begin{tabular}{lrrrrr}
+     \toprule
+    \textbf{Method} & \textbf{Prec LS} & \textbf{Rec LS}
+                    & \textbf{Prec SAS} & \textbf{Rec SAS}
+                    & \textbf{Macro F1} \\
+    \midrule
+    Rule-based (Makutoane) & 1.00 & 0.03 & 0.63 & n/a & 0.41 \\
+    Char n-gram + LR       & 0.80 & 0.89 & 0.93 & 0.87 &
+                             \textbf{0.87} \\
+    \midrule
+    Proposed target        &      &      &      &      & 0.85 \\
+    \bottomrule     
+    \end{tabular}
+    \caption{Classification performance on 1726 sentence held-out test set.}
+    \label{tab:clf_compare}
+\end{table}
+
+The confusion matrix shows 583 of 653 LS sentences correctly classified and 930 of 1073 SAS sentences correctly classified, with 70 LS sentences misclassified as SAS and 143 SAS sentences misclassified as LS. The asymmetry in misclassification reflects the class imbalance in the training data, which the balanced class weighting partially but not fully corrects.
+
+\subsection{Interpretability Analysis}
+
+Inspection of the logistic regression coefficient vector revealed which character n-gram features most strongly predicted each orthographic variant. The top LS predicting feature was \texttt{oa} with a coefficient of $-3.44$, and the top SAS predicting features included \texttt{wa} with a coefficient of $+1.67$, which corresponds with what \citet{makutoane2022people} documented.
+
+\begin{table}[ht]
+    \centering
+    \begin{tabular}{lrrrrr}
+     \toprule
+        \textbf{Rank} & \textbf{LS feature} & \textbf{Coef.}
+                      & \textbf{Coef.} & \textbf{SAS feature} \\
+        \midrule
+        1 & \texttt{oa}   & $-3.44$ & $+1.76$ & \texttt{loko} \\
+        2 & \texttt{bohl} & $-2.39$ & $+1.70$ & \texttt{gwan} \\
+        3 & \texttt{lol}  & $-1.46$ & $+1.67$ & \texttt{wa}   \\
+        4 & \texttt{ut}   & $-1.37$ & $+1.66$ & \texttt{bop}  \\
+        5 & \texttt{nyan} & $-1.36$ & $+1.63$ & \texttt{kel}  \\
+    \bottomrule
+    \end{tabular}
+    \caption{Top five discriminating character n-gram features by logistic regression coefficients}
+    \label{tab:clf_compare}
+\end{table}
+
+
+\section{Named Entity Recognition (NER) Evaluation}
+\subsection{Experimental Setup}
+NER evaluation was conducted using the NWU Sesotho Named ENtity Recognition corpus \citep{eiselen2014developing}, which contains 9472 sentences annotated with the following entity types: \texttt{"OUT"} being the token is not part of any entity, \texttt{"B-PERS"} being the beginnig of a person's name, \texttt{"I-PERS"} being the inside of a person's name in essence the continuation, \texttt{"B-ORG"} being the beginnig of an organisation's name, \texttt{"I-ORG"} being the continuation of an organisation's name, \texttt{"B-LOC"} being the beignning of a location's name, \texttt{"I-LOC"} being the continuation of a location's name, \texttt{"B-MISC"} being the beginning of a miscellaneous name entity, and \texttt{"I-MISC"} being the continuation of a miscellaneous name entity. The dataset was split 80/20 into training and test sets using stratified sampling. 
+
+Due to GPU memory constraints in the available compute environment (Google Colab T4), domain-adaptive pretraining, in which AfroXLMR-mini \citep{alabi-etal-2025-charting} would be further pretrained via masked language modelling on each corpus before NER fine-tuning, was not feasible. An alternative method, AfroXLMR-mini, was used as a frozen feature extractor. A logistic regression classifier was then trained on the augmented token features. 
+
+\subsection{Results}
+
+Both models achieved a macro F1 of approximately 0.39 with no statistically significant difference between them. The NER evaluation did not demonstrate a measurable advantage from corpus curation under this experiment.
+
+\begin{table}[ht]
+    \centering
+    \begin{tabular}{lrr}
+    \toprule
+    \textbf{Corpus} & \textbf{Method} & \textbf{Macro F1} \\
+    \midrule
+    Curated (pipeline) & Frozen AfroXLMR + LR & 0.3929 \\
+    Raw (unfiltered)   & Frozen AfroXLMR + LR & 0.3942 \\
+    \midrule
+    \multicolumn{2}{l}{Difference} & $-0.0013$ \\
+    \multicolumn{2}{l}{Wilcoxon signed-rank ($p$-value)} & 0.886 \\
+    \multicolumn{2}{l}{Significant ($\alpha = 0.05$)} & No \\
+    \bottomrule
+    \end{tabular}
+    \caption{NER evaluation on NWU Sesotho NER corpus}
+    \label{tab:ner_results}
+\end{table}
+
+
+\section{Language Model Perplexity Evaluation}
+
+\subsection{Experimental Setup}
+A character-level 5-gram language model with add $-k$ smoothing ($k = 0.1$) was trained on each corpus and evaluated on the FLORES-200 Sesotho devtest split \citep{nllb2022}. 
+
+\subsection{Results}
+The curated corpus achieved a perplexity of 6.21, versus 9.11 for the raw corpus, a significant reduction of 31.77%. The result demonstrates that the pipeline's quality filtering produces a corpus that generates a measurably better statistical model of Sesotho than an unfiltered text collection from the same sources. 
+
+
+\begin{table}[ht]
+    \centering
+    \begin{tabular}{lrrrr}
+    \toprule
+    \textbf{Corpus} & \textbf{Sents} & \textbf{Vocab}
+                    & \textbf{Unique 5-grams} & \textbf{Perplexity} \\
+    \midrule
+    Curated (pipeline) & 8,626 & 77 & 58,753 & \textbf{6.21} \\
+    Raw (unfiltered)   & 8,626 & 70 & 109,799 & 9.11 \\
+    \midrule
+    \multicolumn{4}{l}{Perplexity reduction} & 31.77\% \\
+    \multicolumn{4}{l}{Wilcoxon signed-rank ($p$-value)} & $< 0.001$ \\
+    \bottomrule
+    \end{tabular}
+    \caption{Language model perplexity on FLORES-200 Sesotho devtest}
+    \label{tab:per_results}
+\end{table}
+
+
+\section{Discussion}
+
+The classifier's performance confirms that the SAS/LS distinction is computationally detectable at the sentence level using character-level distributional features. The proposed F1 threshold of 0.85 was exceeded, demonstrating that the pipeline's orthographic labelling component is sufficiently reliable for corpus curation purposes. However, the interpretability analysis reveals that other top features reflect lexical distributional patterns associated with each community's predominant text domains rather than graphemic substitutions. This finding reflects the composition of the training corpus, with LS data dominated by new headlines, while SAS is dominated by government prose and educational text.
+
+The null result from the NER evaluation is attributable to the frozen feature extraction approach, as NER benefits substantially from task-specific fine-tuning of the underlying language model, which allows the model to adapt its contextual representations to the syntactic and semantic patterns specific to NER. Another limitation is the corpus centroid augmentation method, as it computes a single mean vector across thousands of sentences and uniformly concatenates it to every token feature. \citet{gumede2025creating} note that frozen representations are insufficient for morphologically complex languages such as Sesotho, where fine-tuning is necessary for the model to learn the agglutinative token boundaries relevant to NER. 
+
+Table~\ref{tab:per_results} explains the mechanism behind preplexity improvement. The curated corpus has a larger character vocabulary of 77 versus 70, despite identical sentence counts, reflecting the removal of English fragments during code-switching detection. The raw corpus contains English stopwords that reduce character diversity by flooding the distribution with common ASCII characters. In contrast, their removal in the curated corpus reveals more Sesotho characters, including diacritical variants preserved by NFC normalisation. The raw corpus contains nearly twice as many unique 5-grams (109799 vs 58753), indicating a large proportion of character combinations that appear only once. This may arise from encoding artefacts, code-switching fragments, and question-number prefixes in unfiltered PDF extraction. Thus, the pipeline's cleaning stages remove this noise, producing a tighter and more consistent character distribution that the language model learns more effectively. 
+
+\chapter{Conclusion and Future Work}
+
+
+\newpage
+\lhead{References}
+\bibliographystyle{ruauthordate}
+\addcontentsline{toc}{chapter}{References}
+\bibliography{references}
+
+\renewcommand{\chapterheadstartvskip}{\vspace*{-6\baselineskip}}
+
+\newpage
+\begin{appendices}
+\input{Chapters/AppendixA}
+\newpage
+\end{appendices}
+
+\end{document}

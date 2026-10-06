@@ -1,0 +1,195 @@
+\documentclass[11pt,a4paper]{article}
+\usepackage[top=42pt,bottom=42pt,left=70pt,right=70pt]{geometry}  % to make pages wider
+
+\usepackage{amsmath}
+\usepackage{amsfonts}
+\usepackage{graphicx}  % for figures etc.
+\usepackage{url}  % to handle URLs 
+\usepackage[comma,authoryear]{natbib}  % for author-date ref style --  allows \citet (textual), and \citep (parenthesized)
+\usepackage[hidelinks]{hyperref}
+\hypersetup{allcolors=[rgb]{0, 0, 0.33},colorlinks=true}
+
+\renewcommand {\cite} {\citep}  % default for cite is citet in natbib - changes it to citep
+\renewcommand\bibname{References}    % if not using newrucsthesis sty file
+
+\usepackage{booktabs}
+\usepackage{array}
+\usepackage{enumitem}
+\usepackage{listings}
+\usepackage{amssymb}
+
+\usepackage{setspace}
+\doublespacing
+
+% Optional: Customizing how the code looks
+\lstset{
+    basicstyle=\ttfamily\small,
+    numbers=left,           
+    numberstyle=\tiny,     
+    stepnumber=2,          
+    numbersep=5pt,
+    frame=single,           
+    rulecolor=\color{black},
+    frameround=tttt,        
+    breaklines=true         
+}
+
+\title{Results and Analysis}
+\author{g23n7880 }
+\date{September 2026}
+
+\begin{document}
+
+\maketitle
+\begin{document}
+
+\maketitle
+\section{Overview}
+
+This chapter presents the results of three evaluations conducted on the semi-automated Sesotho corpus construction pipeline. The evaluations are organised around the three research questions and their associated success criteria. 
+
+The first evaluation addresses the orthographic classifier's performance, while the second and third evaluations address the corpus's downstream utility.
+
+\begin{table}[ht]
+    \centering
+    \begin{tabular}{llll}
+     \toprule
+    \textbf{RQ} & \textbf{Evaluation} & \textbf{Criterion} &
+    \textbf{Outcome} \\
+    \midrule
+    RQ2 & Orthographic classifier & Macro F1 $\geq$ 0.85 & Met (0.87) \\
+    RQ3 & Perplexity (FLORES-200) & Reduction, $p < 0.05$ &
+          Met (31.8\%, $p < 0.001$) \\
+    RQ3 & NER (NWU corpus) & F1 improvement, $p < 0.05$ &
+          Not met ($\Delta = -0.001$) \\
+    \bottomrule     
+    \end{tabular}
+    \caption{Mapping of evaluations to research questions and success criteria.}
+    \label{tab:results_map}
+\end{table}
+
+\section{Orthographic classifier evaluation}
+
+\subsection{Experimental Setup }
+
+The orthographic classifier was evaluated on a stratified 20\% held-out test set of 1726 sentences (1073 SAS and 653 LS), drawn from the same verified corpus used for training. A rule-based baseline and trained character n-gram logistic regression classifier were evaluated on the same test set. The rule-based baseline implements the substitution rules documented by \citet{makutoane2022people} as a marker-counting function applied to pre-normalised text.
+
+\subsection{Rule-based Baseline Results}
+
+The rule-based baseline achieved a macro F1 of 0.4111 on the held-out test set. A per-class breakdown reveals that LS precision was 1.00 while LS recall was 0.03, meaning the baseline correctly identified almost no LS sentences despite perfect precision on the few it did label as LS. SAS precision was 0.63, and recall was not reported because the class dominated the predictions by default.
+
+This result is informative, as it confirms that the explicitly documented substitution rules are insufficient as a sentence-level classification mechanism. Markers such as \textit{ea}, \textit{oa}, \textit{ya}, and \textit{wa} do not appear uniformly across all Sesotho sentences. Many grammatically complete sentences that rely exclusively on the presence of these markers will therefore fail to identify the majority of genuine LS sentences, which motivates the need for a learned classifier that can exploit distributional character patterns beyond the documented marker set.
+
+\subsection{Learned classifier results}
+The character n-gram logistic regression classifier achieved a macro F1 of 0.8714 on the held-out test set, exceeding the proposed threshold of 0.85 and surpassing the rule-based baseline by 0.46 F1 points.
+
+\begin{table}[ht]
+    \centering
+    \begin{tabular}{lrrrrr}
+     \toprule
+    \textbf{Method} & \textbf{Prec LS} & \textbf{Rec LS}
+                    & \textbf{Prec SAS} & \textbf{Rec SAS}
+                    & \textbf{Macro F1} \\
+    \midrule
+    Rule-based (Makutoane) & 1.00 & 0.03 & 0.63 & n/a & 0.41 \\
+    Char n-gram + LR       & 0.80 & 0.89 & 0.93 & 0.87 &
+                             \textbf{0.87} \\
+    \midrule
+    Proposed target        &      &      &      &      & 0.85 \\
+    \bottomrule     
+    \end{tabular}
+    \caption{Classification performance on 1726 sentence held-out test set.}
+    \label{tab:clf_compare}
+\end{table}
+
+The confusion matrix shows 583 of 653 LS sentences correctly classified and 930 of 1073 SAS sentences correctly classified, with 70 LS sentences misclassified as SAS and 143 SAS sentences misclassified as LS. The asymmetry in misclassification reflects the class imbalance in the training data, which the balanced class weighting partially but not fully corrects.
+
+\subsection{Interpretability Analysis}
+
+Inspection of the logistic regression coefficient vector revealed which character n-gram features most strongly predicted each orthographic variant. The top LS predicting feature was \texttt{oa} with a coefficient of $-3.44$, and the top SAS predicting features included \texttt{wa} with a coefficient of $+1.67$, which corresponds with what \citet{makutoane2022people} documented.
+
+\begin{table}[ht]
+    \centering
+    \begin{tabular}{lrrrrr}
+     \toprule
+        \textbf{Rank} & \textbf{LS feature} & \textbf{Coef.}
+                      & \textbf{Coef.} & \textbf{SAS feature} \\
+        \midrule
+        1 & \texttt{oa}   & $-3.44$ & $+1.76$ & \texttt{loko} \\
+        2 & \texttt{bohl} & $-2.39$ & $+1.70$ & \texttt{gwan} \\
+        3 & \texttt{lol}  & $-1.46$ & $+1.67$ & \texttt{wa}   \\
+        4 & \texttt{ut}   & $-1.37$ & $+1.66$ & \texttt{bop}  \\
+        5 & \texttt{nyan} & $-1.36$ & $+1.63$ & \texttt{kel}  \\
+    \bottomrule
+    \end{tabular}
+    \caption{Top five discriminating character n-gram features by logistic regression coefficients}
+    \label{tab:clf_compare}
+\end{table}
+
+
+\section{Named Entity Recognition (NER) Evaluation}
+\subsection{Experimental Setup}
+\subsection{Results}
+
+Both models achieved a macro F1 of approximately 0.39 with no statistically significant difference between them. The NER evaluation did not demonstrate a measurable advantage from corpus curation under this experiment.
+
+\begin{table}[ht]
+    \centering
+    \begin{tabular}{lrr}
+    \toprule
+    \textbf{Corpus} & \textbf{Method} & \textbf{Macro F1} \\
+    \midrule
+    Curated (pipeline) & Frozen AfroXLMR + LR & 0.3929 \\
+    Raw (unfiltered)   & Frozen AfroXLMR + LR & 0.3942 \\
+    \midrule
+    \multicolumn{2}{l}{Difference} & $-0.0013$ \\
+    \multicolumn{2}{l}{Wilcoxon signed-rank ($p$-value)} & 0.886 \\
+    \multicolumn{2}{l}{Significant ($\alpha = 0.05$)} & No \\
+    \bottomrule
+    \end{tabular}
+    \caption{NER evaluation on NWU Sesotho NER corpus}
+    \label{tab:ner_results}
+\end{table}
+
+
+\section{Language Model Perplexity Evaluation}
+
+\subsection{Experimental Setup}
+A character-level 5-gram language model with add $-k$ smoothing ($k = 0.1$) was trained on each corpus and evaluated on the FLORES-200 Sesotho devtest split \citep{nllb2022}. 
+
+\subsection{Results}
+The curated corpus achieved a perplexity of 6.21, versus 9.11 for the raw corpus, a significant reduction of 31.77%. The result demonstrates that the pipeline's quality filtering produces a corpus that generates a measurably better statistical model of Sesotho than an unfiltered text collection from the same sources. 
+
+
+\begin{table}[ht]
+    \centering
+    \begin{tabular}{lrrrr}
+    \toprule
+    \textbf{Corpus} & \textbf{Sents} & \textbf{Vocab}
+                    & \textbf{Unique 5-grams} & \textbf{Perplexity} \\
+    \midrule
+    Curated (pipeline) & 8,626 & 77 & 58,753 & \textbf{6.21} \\
+    Raw (unfiltered)   & 8,626 & 70 & 109,799 & 9.11 \\
+    \midrule
+    \multicolumn{4}{l}{Perplexity reduction} & 31.77\% \\
+    \multicolumn{4}{l}{Wilcoxon signed-rank ($p$-value)} & $< 0.001$ \\
+    \bottomrule
+    \end{tabular}
+    \caption{Language model perplexity on FLORES-200 Sesotho devtest}
+    \label{tab:per_results}
+\end{table}
+
+
+
+
+\section{Discussion}
+
+The classifier's performance confirms that the SAS/LS distinction is computationally detectable at the sentence level using character-level distributional features. The proposed F1 threshold of 0.85 was exceeded, demonstrating that the pipeline's orthographic labelling component is sufficiently reliable for corpus curation purposes. However, the interpretability analysis reveals that other top features reflect lexical distributional patterns associated with each community's predominant text domains rather than graphemic substitutions. This finding reflects the composition of the training corpus, with LS data dominated by new headlines, while SAS is dominated by government prose and educational text.
+
+The null result from the NER evaluation is attributable to the frozen feature extraction approach, as NER benefits substantially from task-specific fine-tuning of the underlying language model, which allows the model to adapt its contextual representations to the syntactic and semantic patterns specific to NER. Another limitation is the corpus centroid augmentation method, as it computes a single mean vector across thousands of sentences and uniformly concatenates it to every token feature. \citet{gumede2025creating} note that frozen representations are insufficient for morphologically complex languages such as Sesotho, where fine-tuning is necessary for the model to learn the agglutinative token boundaries relevant to NER. 
+
+Table~\ref{tab:per_results} explains the mechanism behind preplexity improvement. The curated corpus has a larger character vocabulary of 77 versus 70, despite identical sentence counts, reflecting the removal of English fragments during code-switching detection. The raw corpus contains English stopwords that reduce character diversity by flooding the distribution with common ASCII characters. In contrast, their removal in the curated corpus reveals more Sesotho characters, including diacritical variants preserved by NFC normalisation. The raw corpus contains nearly twice as many unique 5-grams (109799 vs 58753), indicating a large proportion of character combinations that appear only once. This may arise from encoding artefacts, code-switching fragments, and question-number prefixes in unfiltered PDF extraction. Thus, the pipeline's cleaning stages remove this noise, producing a tighter and more consistent character distribution that the language model learns more effectively. 
+
+
+\end{document}
+

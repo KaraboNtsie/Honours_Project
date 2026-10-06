@@ -1,0 +1,96 @@
+Calibration (Maize)								Sesotho
+
+
+
+Ho metha ha sefafatsi
+
+
+
+Instructions:
+
+Folio Strap: Metjhine
+
+Byline: E hlophisitswe ho tswa Thutong ya Sethekgenike sa Ntshetsopele ya Bokgoni ya Grain SA ka Jane McPherson
+
+Photos: Calibration
+
+
+
+Artikele e fetileng e akareditse dikarolo tsa sefafaletsahole le hore se sebetsa jwang. Artikeleng ena, re tla ke re shebane le matshwao ao sefafatsi se methang ka ona.
+
+
+
+Matshwao a methang ke eng?
+
+Mosebetsi wa ho etsa matshwao sefafatsing hore se methe o etswa ka sepheo sa hore ha o fafatsa o kgone ho fafatsa bongata bo nepahetseng ba sephalli (metsi le tjhefo) karolong e fafatswang. 
+
+
+
+Disebediswa tse hlokahalang ho etsweng ha matshwao a methang 
+
+Timer;
+
+Jeke (nkgonyana) e methang (e tshwailweng ka dimililitara); le
+
+Theipi e methang.
+
+
+
+Ke eng e ka sothwang? 
+
+Molongwana (nozzle). Molongwana o lesobana le lenyane o tla ntsha sephalli se senyane papisong le molongwana o lesoba le leholwanyane. Molongwana o ka nna wa ba le paterone e sephara kapa e tshesane ya ho fafatsa. 
+
+Kgatello ya sefafatsi. Ha o ntse o pompa ka matla, kgatello e a eketseha, mme sephalli se sengata se dumellwa ho tswa. Ha kgatello e ntse e eketseha, marothodi le ona a ntse a eba manyane. 
+
+Ha o fafatsa ka terekere, kgatello ya pompo e angwa ke ho bidikoloha/motsotso (revolutions/minute) rpm.
+
+Dikere (gears) tsa terekere di ama lebelo la terekere.
+
+Mosebedisi wa terekere o tshwanetse ho etsa qeto mabapi le rpm hammoho le kere (gear) e tla sebediswa hore maemo ana a se fetohe hang ha metwa (matshwao a takilweng) e methang e se e entswe.
+
+Fetola bongata ba tjhefo motswakong. Tjhefo e ngata e bolela disebediswa tse ngata tse sebetsang ka bongata bo le bong ba metsi.
+
+
+
+Mokgwa wa ho etsa matshwao a methang 
+
+Tlatsa tanka ya sefafatsi.
+
+Etsa qeto hore ke kere efe e tla sebediswa le hore ka lebelo (rpm) lefe (mohlala, kere ya 4 ka lebelo la 200 rpm).
+
+Metha sebaka sa dimithara tse 100.
+
+Ka ho sebedisa kere eo, hammoho le lebelo (rpm) le nepahetseng, metha nako eo terekere e e nkang ho phetha dimithara tse 100 (mohlala, metsotswana e 21). 
+
+Mathisa enjene terekere e ntse e eme. Etsa jwalo ka lebelo leo ho dumellanweng ka lona la 2 500 rpm. Hlahloba sebaka se fihlellwang mobung ka ho fafatsa.
+
+Etsa hore kgatello sefafatsing e fane ka sephetho se lakatswang (mohl. 3 bar).
+
+O ntse o sebedisa nako e le nngwe (mohl. Metsotswana e 21)e nkilweng ke terekere ho phetha 100 m, sebedisa sefafatsi, mme o methe bongata ba metsi a ntshwang ke molongwana o le mong (mohl. 1 200 ml / 1,2 lithara).
+
+Pheta tshebetso ena ka melongwana e mmedi kapa e meraro, mme o fumane palohare.
+
+Sebedisa bongata ba sephalli se tswang molongwaneng (mohl. 1 200 / 1,2 lithara), mme o atise sena ka palo ya melongwana (mohl. Melongwana e 12) e le ho tseba hore ke dilithara tse kae tseo o di fafatsang sebakeng se etsang 100 m (ka melongwana kaofela, 12 x 1,2 lithara = 14,4 lithara).
+
+Metha bophara ba karolo e ntshang metsi (boom) (mohl. 4,7 m).
+
+Jwale o tseba bophara boo o bo fafatsang, ebile o tseba bongata ba metsi a fafatswang bophareng boo, boleleleng ba dimithara tse 100.
+
+Area e akaretswang ke sefafatsi boleleleng ba mithara tse 100: 100 m x 4,7 m = 470 sekwere methara (sq. m).
+
+Re sebedisitse 14,4 lithara tsa metsi sebakeng sena.
+
+Area ya hekthara e le nngwe = 10 000 sekwere methara (100 m x 100 m).
+
+Volumo e tshwanetseng ho sebediswa hekthareng e le nngwe e tla ba 10 000 / 470 = 21,27 x 14,4 l / hekthara.
+
+Leibole setshelong sa khemikhale e tla bontsha bongata ba metsi a hlokahalang hekthareng ka nngwe hammoho le palo ya dilithara tsa tjhefo tse hlokahalang hekthareng ka nngwe.
+
+Ha o sebeditse dipalo tsa hao hantle, mme o lemoha bongata ba sephalli se ntseng se fafatswa ho ya ka tlwaelo, pheta tshebetso ena, mme o fetole kgatello ya sefafatsi kapa kere (gear) ya terekere kapa boholo ba molongwana.
+
+Hang ha bongata ba metsi bo nepahetse, jwale o tlamehile ho fumana palo ya lithara tsa tjhefo e tshwanetseng ho kenyeletswa tankeng e nngwe le e nngwe ya sefafatsi.
+
+Mohlala, tanka e tshwara dilithara tse 500 tsa metsi. Re tlamehile ho sebedisa dilithara tse 4 tsa tjhefo hekthareng ka nngwe. E tla ba 500 lithara / 306 (dilithara tse sebediswang hekthareng ka nngwe) ka makgetlo a 4 (dilithara tsa tjhefo hekthara ka nngwe).
+
+Re tshwanetse ho eketsa 6,5 dilithara tsa tjhefo dilithareng tse ding le tse ding tse 500 tsa metsi. 
+
