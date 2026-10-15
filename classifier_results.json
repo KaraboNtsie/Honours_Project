@@ -3,14 +3,14 @@
   "train_size": 6900,
   "test_size": 1726,
   "label_distribution": {
-    "SAS": 5362,
-    "LS": 3264
+    "SAS": 8527,
+    "LS": 99
   },
   "normalisation": "lowercase + strip_punctuation (preserves diacritics)",
-  "rule_based_f1": 0.4111,
-  "learned_f1": 0.8714,
+  "rule_based_f1": 0.9158,
+  "learned_f1": 0.9734,
   "target_f1": 0.85,
   "target_met": true,
   "beats_baseline": true,
-  "demo_accuracy": "4/4"
+  "demo_accuracy": "3/4"
 }

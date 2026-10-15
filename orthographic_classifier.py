@@ -8,6 +8,14 @@ from sklearn.feature_extraction.text import CountVectorizer
 from sklearn.linear_model import LogisticRegression
 from sklearn.metrics import classification_report, confusion_matrix, f1_score
 
+from sklearn.base import clone
+from sklearn.model_selection import RepeatedStratifiedKFold
+from sklearn.metrics import precision_recall_fscore_support
+import numpy as np
+
+
+
+
 # ══════════════════════════════════════════════════════════════════════════════
 # NORMALISATION
 # Strips domain artifacts before classification so the model learns
@@ -33,6 +41,7 @@ print("  CHECKPOINT 1: Loading verified corpus...")
 print("█"*60)
 
 df = pd.read_csv("sesotho_clean.csv")
+df.loc[df["source"] == "Nalibali_LS", "label"] = "SAS"
 print(f"  {len(df)} sentences loaded")
 print(f"  Label distribution:")
 print(df["label"].value_counts().to_string(header=False))
@@ -129,6 +138,21 @@ print(f"  Confusion matrix:")
 print(f"                Predicted LS   Predicted SAS")
 print(f"  Actual LS         {cm[0][0]:<13}  {cm[0][1]}")
 print(f"  Actual SAS        {cm[1][0]:<13}  {cm[1][1]}")
+
+
+
+Xa, ya = np.array(X), np.array(y)
+cv = RepeatedStratifiedKFold(n_splits=5, n_repeats=5, random_state=42)
+lr_f, ru_f, lr_ls, ru_ls = [], [], [], []
+for tr, te in cv.split(Xa, ya):
+    p  = clone(classifier).fit(Xa[tr], ya[tr]).predict(Xa[te])
+    rp = [rule_based_classify(t) for t in Xa[te]]
+    lr_f.append(f1_score(ya[te], p,  average="macro"))
+    ru_f.append(f1_score(ya[te], rp, average="macro"))
+    lr_ls.append(precision_recall_fscore_support(ya[te], p,  labels=["LS"], zero_division=0)[:3])
+    ru_ls.append(precision_recall_fscore_support(ya[te], rp, labels=["LS"], zero_division=0)[:3])
+print(f"LR   macro F1 {np.mean(lr_f):.3f} ± {np.std(lr_f):.3f}  LS P/R/F1 {np.mean(lr_ls,0).round(3)}")
+print(f"Rule macro F1 {np.mean(ru_f):.3f} ± {np.std(ru_f):.3f}  LS P/R/F1 {np.mean(ru_ls,0).round(3)}")
 
 # ══════════════════════════════════════════════════════════════════════════════
 # CHECKPOINT 6 — Compare baseline vs learned
