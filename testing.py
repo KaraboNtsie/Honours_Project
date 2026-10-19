@@ -1,4 +1,3 @@
-# Run this as a quick diagnostic script — save as diagnose.py
 import pandas as pd
 import requests
 import io
