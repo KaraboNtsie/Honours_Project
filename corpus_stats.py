@@ -4,7 +4,7 @@ from sklearn.pipeline import Pipeline
 from sklearn.feature_extraction.text import CountVectorizer
 from sklearn.linear_model import LogisticRegression
 
-# ---------- EDIT THESE PATHS ----------
+
 BASE      = "/home/karabo/Honours_Project/"
 CURATED   = BASE + "sesotho_clean.csv"
 NCHLT_TXT = BASE + "st/2.Corpora/CORP.NCHLT.st.CLEAN.2.0.txt"   # the NCHLT TEXT corpus, not the NER file
