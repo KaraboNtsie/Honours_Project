@@ -253,8 +253,7 @@ print("\n" + "█"*60)
 print("  CHECKPOINT 9: Saving model and results...")
 print("█"*60)
 
-# save the full pipeline including normalisation info
-# NOTE: normalisation is applied externally — wrap it for production use
+
 with open("ortho_classifier.pkl", "wb") as f:
     pickle.dump(classifier, f)
 print("  ✓ Model saved: ortho_classifier.pkl")
